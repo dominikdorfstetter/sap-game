@@ -3,6 +3,8 @@
 export interface GameState {
   company: Company;
   inventory: Inventory;
+  machines: MachineInstance[];
+  unlockedMachines: string[];
   lastTick: number;
   initialized: boolean;
 }
@@ -35,3 +37,25 @@ export interface Recipe {
 }
 
 export type GameScreen = 'setup' | 'production';
+
+export interface Machine {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  recipeId: string;
+  productionTime: number; // milliseconds for automated production
+  unlockRequirement: {
+    type: 'cash' | 'item';
+    value: number;
+    itemId?: string;
+  };
+}
+
+export interface MachineInstance {
+  id: string; // unique instance ID
+  machineId: string; // reference to Machine definition
+  progress: number; // 0-100
+  lastUpdate: number; // timestamp
+  active: boolean;
+}

@@ -15,7 +15,18 @@ export function loadGame(): GameState | null {
   try {
     const saveData = localStorage.getItem(SAVE_KEY);
     if (!saveData) return null;
-    return JSON.parse(saveData) as GameState;
+
+    const loadedState = JSON.parse(saveData) as any;
+
+    // Migrate old saves that don't have automation fields
+    if (!loadedState.machines) {
+      loadedState.machines = [];
+    }
+    if (!loadedState.unlockedMachines) {
+      loadedState.unlockedMachines = ['ore_extractor'];
+    }
+
+    return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
     return null;
@@ -38,6 +49,8 @@ export function createNewGame(companyName: string): GameState {
       ingot: 0,
       screw: 0,
     },
+    machines: [],
+    unlockedMachines: ['ore_extractor'], // First machine unlocked from start
     lastTick: Date.now(),
     initialized: true,
   };

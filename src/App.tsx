@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { GameState, GameScreen } from './types/game.types';
 import { loadGame, saveGame, createNewGame } from './utils/saveSystem';
+import { processMachineProduction, checkAndUnlockMachines } from './utils/productionSystem';
 import { SetupScreen } from './components/screens/SetupScreen';
 import { ProductionScreen } from './components/screens/ProductionScreen';
 import './styles/sapTheme.css';
@@ -28,6 +29,27 @@ export function App() {
 
     return () => clearInterval(interval);
   }, [gameState]);
+
+  // Game tick - process automated production
+  useEffect(() => {
+    if (!gameState) return;
+
+    const interval = setInterval(() => {
+      setGameState((currentState) => {
+        if (!currentState) return currentState;
+
+        // Process machine production
+        let newState = processMachineProduction(currentState, 500);
+
+        // Check for new unlocks
+        newState = checkAndUnlockMachines(newState);
+
+        return newState;
+      });
+    }, 500); // Tick every 500ms
+
+    return () => clearInterval(interval);
+  }, [gameState?.machines.length]); // Re-run when number of machines changes
 
   // Save on unmount
   useEffect(() => {

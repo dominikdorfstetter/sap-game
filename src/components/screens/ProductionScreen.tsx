@@ -2,9 +2,11 @@ import { useEffect, useState } from 'preact/hooks';
 import { GameState } from '../../types/game.types';
 import { ITEMS } from '../../data/items';
 import { RECIPES } from '../../data/recipes';
+import { purchaseMachine } from '../../utils/productionSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
+import { MachinePanel } from '../game/MachinePanel';
 
 interface ProductionScreenProps {
   gameState: GameState;
@@ -108,6 +110,13 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
 
     const currentAmount = gameState.inventory[recipe.input.itemId] || 0;
     return currentAmount >= recipe.input.amount;
+  };
+
+  const handlePurchaseMachine = (machineId: string) => {
+    const newState = purchaseMachine(gameState, machineId);
+    if (newState) {
+      onUpdateState(newState);
+    }
   };
 
   return (
@@ -233,6 +242,9 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
             </tbody>
           </table>
         </Panel>
+
+        {/* Machine Purchase and Automation Section */}
+        <MachinePanel gameState={gameState} onPurchase={handlePurchaseMachine} />
 
         {/* Statistics Section */}
         <Panel title="Company Statistics">
