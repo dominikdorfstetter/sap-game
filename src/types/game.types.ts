@@ -124,6 +124,8 @@ export interface FiscalHistory {
   productivity: number[]; // Last 12 quarters
 }
 
+export type StaffRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
 export interface StaffType {
   id: string;
   name: string;
@@ -133,6 +135,15 @@ export interface StaffType {
   productionSpeed: number; // Multiplier
   specialty: string; // Recipe ID or 'research'
   maxHires: number; // -1 for unlimited
+  rarity: StaffRarity;
+  isSpecial?: boolean; // Easter egg characters
+  globalBonus?: StaffGlobalBonus; // Special global effects
+}
+
+export interface StaffGlobalBonus {
+  type: 'production_speed' | 'cost_reduction' | 'revenue_boost' | 'research_speed' | 'productivity' | 'all_stats';
+  value: number; // Multiplier or percentage
+  description: string;
 }
 
 export interface StaffMember {
@@ -140,7 +151,13 @@ export interface StaffMember {
   staffTypeId: string;
   hiredAt: number;
   assignedRecipe: string | null; // null if idle or researching
+  // Randomized stats (variation from base)
+  salaryMultiplier: number; // 0.7 - 1.3
+  speedMultiplier: number; // 0.8 - 1.5
+  rarity: StaffRarity;
+  name: string; // Generated or special name
 }
+
 
 export interface ResearchQueue {
   current: ResearchProject | null;

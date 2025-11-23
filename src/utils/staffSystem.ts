@@ -1,8 +1,13 @@
 import { GameState, StaffMember, StaffType } from '../types/game.types';
-import { STAFF_TYPES, RESEARCH_TIMES } from '../data/staff';
+import { STAFF_TYPES, RESEARCH_TIMES, STAT_VARIATIONS } from '../data/staff';
 import { RECIPES } from '../data/recipes';
 import { UPGRADES } from '../data/upgrades';
 import { recordExpense } from './fiscalSystem';
+
+// Generate random multiplier within range
+function randomInRange(min: number, max: number): number {
+  return min + Math.random() * (max - min);
+}
 
 export function hireStaff(gameState: GameState, staffTypeId: string): GameState | null {
   const staffType = STAFF_TYPES[staffTypeId];
@@ -20,11 +25,20 @@ export function hireStaff(gameState: GameState, staffTypeId: string): GameState 
   const newState = { ...gameState };
   newState.company.cash -= staffType.hireCoat;
 
+  // Generate randomized stats based on rarity
+  const statRange = STAT_VARIATIONS[staffType.rarity];
+  const salaryMultiplier = randomInRange(statRange.salary[0], statRange.salary[1]);
+  const speedMultiplier = randomInRange(statRange.speed[0], statRange.speed[1]);
+
   const newStaffMember: StaffMember = {
     id: `staff_${Date.now()}_${Math.random()}`,
     staffTypeId,
     hiredAt: Date.now(),
     assignedRecipe: null,
+    salaryMultiplier,
+    speedMultiplier,
+    rarity: staffType.rarity,
+    name: staffType.isSpecial ? staffType.name : `${staffType.name} #${gameState.staff.length + 1}`,
   };
 
   newState.staff = [...newState.staff, newStaffMember];
@@ -68,9 +82,10 @@ export function processStaffProduction(gameState: GameState, deltaTime: number):
 
     if (!recipe || !canStaffPerformRecipe(staffType, recipe.id)) continue;
 
-    // Staff produce at their production speed
+    // Staff produce at their production speed (with individual multiplier)
     // Simple approach: chance to produce based on speed and delta
-    const productionChance = (deltaTime / recipe.productionTime) * staffType.productionSpeed;
+    const effectiveSpeed = staffType.productionSpeed * staff.speedMultiplier;
+    const productionChance = (deltaTime / recipe.productionTime) * effectiveSpeed;
 
     if (Math.random() < productionChance) {
       // Check materials
@@ -140,7 +155,8 @@ export function paySalaries(gameState: GameState): GameState {
 
   for (const staff of newState.staff) {
     const staffType = STAFF_TYPES[staff.staffTypeId];
-    totalSalary += staffType.baseSalary;
+    const effectiveSalary = staffType.baseSalary * staff.salaryMultiplier;
+    totalSalary += effectiveSalary;
   }
 
   newState.company.cash -= totalSalary;
@@ -221,7 +237,8 @@ export function getTotalHourlyCost(gameState: GameState): number {
   let total = 0;
   for (const staff of gameState.staff) {
     const staffType = STAFF_TYPES[staff.staffTypeId];
-    total += staffType.baseSalary;
+    const effectiveSalary = staffType.baseSalary * staff.salaryMultiplier;
+    total += effectiveSalary;
   }
   return total;
 }
