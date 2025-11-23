@@ -35,7 +35,15 @@ export function loadGame(): GameState | null {
       loadedState.market = initializeMarket();
     }
     if (!loadedState.unlockedRecipes) {
-      loadedState.unlockedRecipes = ['mine_ore', 'smelt_ingot', 'craft_screw'];
+      loadedState.unlockedRecipes = ['mine_ore', 'chop_wood', 'mine_coal', 'smelt_ingot', 'cut_wood_plank', 'craft_screw'];
+    } else {
+      // Add new recipes to existing saves
+      const newRecipes = ['chop_wood', 'mine_coal', 'cut_wood_plank'];
+      for (const recipeId of newRecipes) {
+        if (!loadedState.unlockedRecipes.includes(recipeId)) {
+          loadedState.unlockedRecipes.push(recipeId);
+        }
+      }
     }
 
     // Ensure all new items exist in inventory
@@ -99,7 +107,7 @@ export function createNewGame(companyName: string): GameState {
     unlockedMachines: ['ore_extractor'],
     upgrades: {},
     market: initializeMarket(),
-    unlockedRecipes: ['mine_ore', 'smelt_ingot', 'craft_screw'],
+    unlockedRecipes: ['mine_ore', 'chop_wood', 'mine_coal', 'smelt_ingot', 'cut_wood_plank', 'craft_screw'],
     staff: [],
     research: {
       current: null,
