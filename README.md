@@ -2,8 +2,9 @@
 
 A vintage SAP-themed idle/incremental game where you manage a production company. Start from mining ore and build up to complex production chains!
 
-## 🎮 Current Features (Phase 1 MVP)
+## 🎮 Current Features (Phase 1 & 2)
 
+### Phase 1 - Manual Production ✅
 - **Company Setup**: Name your company and start from scratch
 - **Manual Production**: Click to produce items through a production chain
   - Mine Iron Ore (1 second)
@@ -13,6 +14,17 @@ A vintage SAP-themed idle/incremental game where you manage a production company
 - **Selling System**: Sell items at any time for cash
 - **Auto-Save**: Game automatically saves every 10 seconds
 - **Vintage SAP UI**: Classic enterprise software aesthetic with sharp edges, SAP blue, and retro styling
+
+### Phase 2 - Automation ✅
+- **Machine Purchase System**: Buy machines to automate production
+  - Ore Extractor ($100) - automatically mines ore every 5 seconds
+  - Auto-Smelter ($250) - automatically smelts ingots every 8 seconds
+  - Screw Machine ($500) - automatically crafts screws every 10 seconds
+- **Progressive Unlocks**: Machines unlock as you reach cash milestones
+- **Background Processing**: Game continues producing even while idle
+- **Multiple Machines**: Purchase multiple of the same machine type
+- **Machine Status**: Real-time progress bars and status indicators
+- **True Idle Gameplay**: Transition from manual clicking to automated factory
 
 ## 🚀 Getting Started
 
@@ -38,23 +50,29 @@ npm run preview
 
 ## 🎯 How to Play
 
+### Early Game (Manual Phase)
 1. **Start**: Enter your company name
 2. **Mine**: Click "Mine" to extract iron ore (sells for $1)
 3. **Smelt**: Click "Smelt" to turn ore into ingots (sells for $3)
 4. **Craft**: Click "Craft" to turn ingots into screws (sells for $5)
 5. **Sell**: Use "Sell All" buttons to convert inventory to cash
-6. **Strategy**: Decide whether to sell items for immediate profit or keep them for higher-tier production
+6. **Save Up**: Accumulate $100 for your first machine!
+
+### Mid Game (First Automation)
+7. **Buy Ore Extractor**: Purchase your first machine for $100
+8. **Passive Income**: Watch ore automatically accumulate
+9. **Unlock More**: Auto-Smelter unlocks at $100, Screw Machine at $250
+10. **Scale Up**: Buy multiple machines to increase production
+11. **Strategy**: Balance manual production with automation purchases
 
 ## 📈 Progression Path
 
-### Current (Phase 1)
-- Manual clicking for all production
-- Basic 3-item production chain
-- Simple selling mechanics
+### Completed
+- **Phase 1** ✅: Manual clicking, basic production chain, selling
+- **Phase 2** ✅: Machine automation, progressive unlocks, idle gameplay
 
 ### Coming Soon
-- **Phase 2**: First automation - buy machines to auto-produce
-- **Phase 3**: Extended production chains with 10+ items
+- **Phase 3**: Extended production chains with 10+ items (brackets, hinges, doors, cabinets)
 - **Phase 4**: Research tree and upgrade systems
 - **Phase 5**: Multiple factories, prestige system, workers
 
@@ -102,5 +120,5 @@ This is a personal project. Feel free to use and modify as you wish!
 ## 🔗 Resources
 
 - Design Document: [DESIGN.md](./DESIGN.md)
-- Current Phase: **Phase 1 (MVP)** ✅
-- Next Phase: **Phase 2 (Automation)**
+- Current Phase: **Phase 2 (Automation)** ✅
+- Next Phase: **Phase 3 (Production Chains)**
