@@ -40,6 +40,8 @@ export interface Item {
   productionTime: number; // milliseconds for manual production
 }
 
+export type InputMethod = 'click' | 'slider' | 'rapid-click' | 'hold-release' | 'sequence';
+
 export interface Recipe {
   id: string;
   name: string;
@@ -47,6 +49,7 @@ export interface Recipe {
   output: { itemId: string; amount: number };
   productionTime: number;
   unlocked: boolean;
+  inputMethod?: InputMethod; // How the user interacts to produce this item manually
 }
 
 export type GameScreen = 'setup' | 'production';

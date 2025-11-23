@@ -9,6 +9,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'ore', amount: 1 },
     productionTime: 1000,
     unlocked: true,
+    inputMethod: 'click', // Simple click to mine
   },
   chop_wood: {
     id: 'chop_wood',
@@ -17,6 +18,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'wood', amount: 1 },
     productionTime: 1200,
     unlocked: true,
+    inputMethod: 'slider', // Saw motion with slider
   },
   mine_coal: {
     id: 'mine_coal',
@@ -25,6 +27,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'coal', amount: 1 },
     productionTime: 1500,
     unlocked: true,
+    inputMethod: 'rapid-click', // Rapid hammering
   },
   gather_sand: {
     id: 'gather_sand',
@@ -33,6 +36,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'sand', amount: 1 },
     productionTime: 800,
     unlocked: false,
+    inputMethod: 'hold-release', // Timing-based scooping
   },
 
   // Tier 2 - Basic Materials
@@ -46,6 +50,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'ingot', amount: 1 },
     productionTime: 2000,
     unlocked: true,
+    inputMethod: 'hold-release', // Timing for furnace
   },
   cut_wood_plank: {
     id: 'cut_wood_plank',
@@ -54,6 +59,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'wood_plank', amount: 2 },
     productionTime: 1800,
     unlocked: true,
+    inputMethod: 'slider', // Sawing motion
   },
   make_glass: {
     id: 'make_glass',
@@ -65,6 +71,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'glass_pane', amount: 1 },
     productionTime: 2200,
     unlocked: false,
+    inputMethod: 'hold-release', // Timing for glass furnace
   },
   forge_steel: {
     id: 'forge_steel',
@@ -76,6 +83,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'steel_bar', amount: 1 },
     productionTime: 2500,
     unlocked: false,
+    inputMethod: 'rapid-click', // Hammering steel
   },
 
   // Tier 3 - Simple Components
@@ -86,6 +94,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'screw', amount: 4 },
     productionTime: 3000,
     unlocked: true,
+    inputMethod: 'click', // Simple crafting
   },
   craft_plate: {
     id: 'craft_plate',
@@ -97,6 +106,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'plate', amount: 1 },
     productionTime: 3500,
     unlocked: false,
+    inputMethod: 'rapid-click', // Hammering plate
   },
   craft_wire: {
     id: 'craft_wire',
@@ -105,6 +115,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'wire', amount: 5 },
     productionTime: 2500,
     unlocked: false,
+    inputMethod: 'slider', // Drawing wire through die
   },
   craft_nail: {
     id: 'craft_nail',
@@ -113,6 +124,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'nail', amount: 10 },
     productionTime: 2000,
     unlocked: false,
+    inputMethod: 'rapid-click', // Hammering nails
   },
   craft_bolt: {
     id: 'craft_bolt',
@@ -124,6 +136,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'bolt', amount: 2 },
     productionTime: 3200,
     unlocked: false,
+    inputMethod: 'click', // Simple assembly
   },
 
   // Tier 4 - Components
@@ -137,6 +150,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'bracket', amount: 1 },
     productionTime: 4000,
     unlocked: false,
+    inputMethod: 'click', // Assembly work
   },
   craft_hinge: {
     id: 'craft_hinge',
@@ -149,6 +163,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'hinge', amount: 1 },
     productionTime: 4500,
     unlocked: false,
+    inputMethod: 'click', // Assembly work
   },
   craft_spring: {
     id: 'craft_spring',
@@ -160,6 +175,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'spring', amount: 1 },
     productionTime: 3500,
     unlocked: false,
+    inputMethod: 'slider', // Coiling motion
   },
   craft_gear: {
     id: 'craft_gear',
@@ -171,6 +187,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'gear', amount: 1 },
     productionTime: 4200,
     unlocked: false,
+    inputMethod: 'click', // Assembly work
   },
   craft_circuit: {
     id: 'craft_circuit',
@@ -183,6 +200,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'circuit', amount: 1 },
     productionTime: 5000,
     unlocked: false,
+    inputMethod: 'click', // Precision assembly
   },
 
   // Tier 5 - Assemblies
@@ -199,6 +217,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'door', amount: 1 },
     productionTime: 6000,
     unlocked: false,
+    inputMethod: 'click', // Complex assembly
   },
   craft_window: {
     id: 'craft_window',
@@ -212,6 +231,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'window', amount: 1 },
     productionTime: 5500,
     unlocked: false,
+    inputMethod: 'click', // Complex assembly
   },
   craft_cabinet: {
     id: 'craft_cabinet',
@@ -227,6 +247,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'cabinet', amount: 1 },
     productionTime: 7000,
     unlocked: false,
+    inputMethod: 'click', // Complex assembly
   },
   craft_toolbox: {
     id: 'craft_toolbox',
@@ -241,6 +262,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'toolbox', amount: 1 },
     productionTime: 6500,
     unlocked: false,
+    inputMethod: 'click', // Complex assembly
   },
   craft_engine: {
     id: 'craft_engine',
@@ -256,6 +278,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'engine', amount: 1 },
     productionTime: 8000,
     unlocked: false,
+    inputMethod: 'click', // Complex assembly
   },
 
   // Tier 6 - Advanced Products
@@ -275,6 +298,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'machinery', amount: 1 },
     productionTime: 10000,
     unlocked: false,
+    inputMethod: 'click', // Advanced manufacturing
   },
   craft_vehicle: {
     id: 'craft_vehicle',
@@ -296,6 +320,7 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'vehicle', amount: 1 },
     productionTime: 12000,
     unlocked: false,
+    inputMethod: 'click', // Advanced manufacturing
   },
   craft_computer: {
     id: 'craft_computer',
@@ -311,5 +336,6 @@ export const RECIPES: Record<string, Recipe> = {
     output: { itemId: 'computer', amount: 1 },
     productionTime: 11000,
     unlocked: false,
+    inputMethod: 'click', // Advanced manufacturing
   },
 };

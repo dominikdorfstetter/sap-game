@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { GameState, DashboardWidget } from '../../types/game.types';
 import { ITEMS } from '../../data/items';
 import { RECIPES } from '../../data/recipes';
@@ -11,7 +11,6 @@ import { scoutTalent, hireFromScout, dismissScout, fireStaff, assignStaffToRecip
 import { recordRevenue, recordExpense, payTaxes } from '../../utils/fiscalSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
-import { ProgressBar } from '../ui/ProgressBar';
 import { Modal } from '../ui/Modal';
 import { QuickActions } from '../widgets/QuickActions';
 import { QuickInventory } from '../widgets/QuickInventory';
@@ -26,6 +25,10 @@ import { UpgradePanel } from '../game/UpgradePanel';
 import { MarketPanel } from '../game/MarketPanel';
 import { StaffPanel } from '../game/StaffPanel';
 import { ResearchPanel } from '../game/ResearchPanel';
+import { ClickInput } from '../inputs/ClickInput';
+import { SliderInput } from '../inputs/SliderInput';
+import { RapidClickInput } from '../inputs/RapidClickInput';
+import { HoldReleaseInput } from '../inputs/HoldReleaseInput';
 
 interface ProductionScreenProps {
   gameState: GameState;
@@ -35,64 +38,45 @@ interface ProductionScreenProps {
 type ModalView = 'production' | 'machines' | 'market' | 'upgrades' | 'inventory' | 'customize' | 'staff' | 'research' | null;
 
 export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenProps) {
-  const [activeProduction, setActiveProduction] = useState<{
-    recipeId: string;
-    startTime: number;
-    duration: number;
-  } | null>(null);
-  const [productionProgress, setProductionProgress] = useState(0);
+  const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [modalView, setModalView] = useState<ModalView>(null);
 
-  // Handle manual production
-  const startProduction = (recipeId: string) => {
-    const recipe = RECIPES[recipeId];
+  // Handle manual production completion (called by input components)
+  const handleProductionComplete = () => {
+    if (!selectedRecipe) return;
 
-    for (const input of recipe.inputs) {
-      const currentAmount = gameState.inventory[input.itemId] || 0;
-      if (currentAmount < input.amount) {
-        return;
-      }
-    }
-
-    setActiveProduction({
-      recipeId,
-      startTime: Date.now(),
-      duration: recipe.productionTime,
-    });
-    setProductionProgress(0);
-  };
-
-  useEffect(() => {
-    if (!activeProduction) return;
-
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - activeProduction.startTime;
-      const progress = (elapsed / activeProduction.duration) * 100;
-
-      if (progress >= 100) {
-        completeProduction(activeProduction.recipeId);
-        setActiveProduction(null);
-        setProductionProgress(0);
-      } else {
-        setProductionProgress(progress);
-      }
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [activeProduction]);
-
-  const completeProduction = (recipeId: string) => {
-    const recipe = RECIPES[recipeId];
+    const recipe = RECIPES[selectedRecipe];
     const newState = { ...gameState };
 
+    // Consume inputs
     for (const input of recipe.inputs) {
       newState.inventory[input.itemId] -= input.amount;
     }
 
+    // Add output
     newState.inventory[recipe.output.itemId] =
       (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
 
     onUpdateState(newState);
+  };
+
+  // Render the appropriate input component based on recipe's inputMethod
+  const renderProductionInput = (recipe: typeof RECIPES[string]) => {
+    const inputMethod = recipe.inputMethod || 'click'; // Default to click if not specified
+    const canStart = canProduce(recipe.id);
+
+    switch (inputMethod) {
+      case 'click':
+        return <ClickInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
+      case 'slider':
+        return <SliderInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
+      case 'rapid-click':
+        return <RapidClickInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} requiredClicks={5} />;
+      case 'hold-release':
+        return <HoldReleaseInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
+      default:
+        return <ClickInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
+    }
   };
 
   const sellItem = (itemId: string, amount: number) => {
@@ -194,8 +178,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
   const formatMoney = (amount: number) => `$${amount.toFixed(2)}`;
 
   const canProduce = (recipeId: string) => {
-    if (activeProduction) return false;
-
     const recipe = RECIPES[recipeId];
     for (const input of recipe.inputs) {
       const currentAmount = gameState.inventory[input.itemId] || 0;
@@ -330,18 +312,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
             </div>
           )}
 
-          {pinnedWidgets.includes('production') && activeProduction && (
-            <div style={{ gridColumn: 'span 2' }}>
-              <Panel title="Current Production">
-                <div>
-                  <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
-                    {RECIPES[activeProduction.recipeId].name}
-                  </div>
-                  <ProgressBar progress={productionProgress} />
-                </div>
-              </Panel>
-            </div>
-          )}
         </div>
 
         {pinnedWidgets.length === 0 && (
@@ -360,41 +330,66 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
 
       {/* Modals */}
       {modalView === 'production' && (
-        <Modal title="Production" onClose={() => setModalView(null)} width="900px">
-          <table className="erp-table">
-            <thead>
-              <tr>
-                <th>Action</th>
-                <th>Inputs Required</th>
-                <th>Output</th>
-                <th>Time</th>
-                <th style={{ width: '120px' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {unlockedRecipes.map((recipe) => (
-                <tr key={recipe.id}>
-                  <td>{recipe.name}</td>
-                  <td style={{ fontSize: '11px' }}>{getRecipeInputsDisplay(recipe.id)}</td>
-                  <td>
-                    {recipe.output.amount}x {ITEMS[recipe.output.itemId].name}
-                  </td>
-                  <td>{(recipe.productionTime / 1000).toFixed(1)}s</td>
-                  <td>
-                    <Button
-                      onClick={() => {
-                        startProduction(recipe.id);
-                        setModalView(null);
-                      }}
-                      disabled={!canProduce(recipe.id)}
-                    >
-                      Craft
-                    </Button>
-                  </td>
+        <Modal title="Production" onClose={() => {
+          setModalView(null);
+          setSelectedRecipe(null);
+        }} width="900px">
+          {!selectedRecipe ? (
+            // Recipe selection table
+            <table className="erp-table">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Inputs Required</th>
+                  <th>Output</th>
+                  <th style={{ width: '120px' }}>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {unlockedRecipes.map((recipe) => (
+                  <tr key={recipe.id}>
+                    <td>{recipe.name}</td>
+                    <td style={{ fontSize: '11px' }}>{getRecipeInputsDisplay(recipe.id)}</td>
+                    <td>
+                      {recipe.output.amount}x {ITEMS[recipe.output.itemId].name}
+                    </td>
+                    <td>
+                      <Button
+                        onClick={() => setSelectedRecipe(recipe.id)}
+                        disabled={!canProduce(recipe.id)}
+                        primary
+                      >
+                        Craft
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            // Show input component for selected recipe
+            <div>
+              <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                <h3 style={{ color: '#003366', marginBottom: '8px' }}>
+                  {RECIPES[selectedRecipe].name}
+                </h3>
+                <p style={{ fontSize: '13px', color: '#666' }}>
+                  {getRecipeInputsDisplay(selectedRecipe) !== '-' && (
+                    <span>Requires: {getRecipeInputsDisplay(selectedRecipe)} → </span>
+                  )}
+                  Produces: {RECIPES[selectedRecipe].output.amount}x {ITEMS[RECIPES[selectedRecipe].output.itemId].name}
+                </p>
+              </div>
+
+              {renderProductionInput(RECIPES[selectedRecipe])}
+
+              <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                <Button onClick={() => setSelectedRecipe(null)}>
+                  ← Back to Recipes
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
 
