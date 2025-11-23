@@ -1,5 +1,6 @@
 import { GameState } from '../types/game.types';
 import { initializeMarket } from './marketSystem';
+import { createInitialFiscalState } from './fiscalSystem';
 import { ITEMS } from '../data/items';
 
 const SAVE_KEY = 'sap_production_game_save';
@@ -65,6 +66,11 @@ export function loadGame(): GameState | null {
       loadedState.lastSalaryPayment = Date.now();
     }
 
+    // Migrate fiscal state
+    if (!loadedState.fiscal) {
+      loadedState.fiscal = createInitialFiscalState();
+    }
+
     return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -99,6 +105,7 @@ export function createNewGame(companyName: string): GameState {
       current: null,
       completed: [],
     },
+    fiscal: createInitialFiscalState(),
     preferences: {
       pinnedWidgets: ['quickActions', 'inventory'],
     },

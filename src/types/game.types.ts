@@ -10,6 +10,7 @@ export interface GameState {
   unlockedRecipes: string[];
   staff: StaffMember[];
   research: ResearchQueue;
+  fiscal: FiscalState;
   preferences: UserPreferences;
   lastTick: number;
   lastSalaryPayment: number;
@@ -96,10 +97,31 @@ export interface MarketState {
   lastPriceUpdate: number;
 }
 
-export type DashboardWidget = 'quickActions' | 'inventory' | 'machines' | 'market' | 'production' | 'staff';
+export type DashboardWidget = 'quickActions' | 'inventory' | 'machines' | 'market' | 'production' | 'staff' | 'research' | 'financials' | 'analytics';
 
 export interface UserPreferences {
   pinnedWidgets: DashboardWidget[];
+}
+
+export interface FiscalState {
+  currentQuarter: number; // 1-4
+  fiscalYear: number;
+  quarterStartTime: number; // timestamp
+  quarterDuration: number; // milliseconds (default: 5 minutes)
+  taxRate: number; // percentage (default: 0.20 = 20%)
+  taxesOwed: number;
+  totalTaxesPaid: number;
+  quarterlyRevenue: number;
+  quarterlyExpenses: number;
+  productivityRating: number; // 0-100
+  history: FiscalHistory;
+}
+
+export interface FiscalHistory {
+  revenue: number[]; // Last 12 quarters
+  expenses: number[]; // Last 12 quarters
+  profit: number[]; // Last 12 quarters
+  productivity: number[]; // Last 12 quarters
 }
 
 export interface StaffType {

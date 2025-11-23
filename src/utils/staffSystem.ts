@@ -2,6 +2,7 @@ import { GameState, StaffMember, StaffType } from '../types/game.types';
 import { STAFF_TYPES, RESEARCH_TIMES } from '../data/staff';
 import { RECIPES } from '../data/recipes';
 import { UPGRADES } from '../data/upgrades';
+import { recordExpense } from './fiscalSystem';
 
 export function hireStaff(gameState: GameState, staffTypeId: string): GameState | null {
   const staffType = STAFF_TYPES[staffTypeId];
@@ -134,7 +135,7 @@ export function paySalaries(gameState: GameState): GameState {
 
   if (timeSinceLastPayment < HOUR_MS) return gameState;
 
-  const newState = { ...gameState };
+  let newState = { ...gameState };
   let totalSalary = 0;
 
   for (const staff of newState.staff) {
@@ -144,6 +145,11 @@ export function paySalaries(gameState: GameState): GameState {
 
   newState.company.cash -= totalSalary;
   newState.lastSalaryPayment = now;
+
+  // Record salary as expense
+  if (totalSalary > 0) {
+    newState = recordExpense(newState, totalSalary);
+  }
 
   return newState;
 }

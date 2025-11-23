@@ -2,10 +2,14 @@ import { useEffect, useState } from 'preact/hooks';
 import { GameState, DashboardWidget } from '../../types/game.types';
 import { ITEMS } from '../../data/items';
 import { RECIPES } from '../../data/recipes';
+import { MACHINES } from '../../data/machines';
+import { UPGRADES } from '../../data/upgrades';
+import { STAFF_TYPES } from '../../data/staff';
 import { purchaseMachine } from '../../utils/productionSystem';
 import { getCurrentPrice, adjustDemand } from '../../utils/marketSystem';
 import { purchaseUpgrade, getSellQuantities } from '../../utils/upgradeSystem';
 import { hireStaff, fireStaff, assignStaffToRecipe, startResearch } from '../../utils/staffSystem';
+import { recordRevenue, recordExpense, payTaxes } from '../../utils/fiscalSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -14,6 +18,10 @@ import { QuickActions } from '../widgets/QuickActions';
 import { QuickInventory } from '../widgets/QuickInventory';
 import { QuickMachines } from '../widgets/QuickMachines';
 import { QuickMarket } from '../widgets/QuickMarket';
+import { QuickStaff } from '../widgets/QuickStaff';
+import { QuickResearch } from '../widgets/QuickResearch';
+import { QuickFinancials } from '../widgets/QuickFinancials';
+import { QuickAnalytics } from '../widgets/QuickAnalytics';
 import { MachinePanel } from '../game/MachinePanel';
 import { UpgradePanel } from '../game/UpgradePanel';
 import { MarketPanel } from '../game/MarketPanel';
@@ -93,32 +101,49 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     if (currentAmount < amount) return;
 
     const price = getCurrentPrice(gameState, itemId);
+    const revenue = price * amount;
     let newState = { ...gameState };
 
     newState.inventory[itemId] -= amount;
-    newState.company.cash += price * amount;
+    newState.company.cash += revenue;
     newState = adjustDemand(newState, itemId, amount);
+    newState = recordRevenue(newState, revenue);
 
     onUpdateState(newState);
   };
 
   const handlePurchaseMachine = (machineId: string) => {
-    const newState = purchaseMachine(gameState, machineId);
-    if (newState) {
+    const machine = MACHINES[machineId];
+    let newState = purchaseMachine(gameState, machineId);
+    if (newState && machine) {
+      // Record machine purchase as expense
+      newState = recordExpense(newState, machine.cost);
       onUpdateState(newState);
     }
   };
 
   const handlePurchaseUpgrade = (upgradeId: string) => {
-    const newState = purchaseUpgrade(gameState, upgradeId);
+    let newState = purchaseUpgrade(gameState, upgradeId);
     if (newState) {
+      // Record upgrade cost as expense
+      const upgrade = UPGRADES[upgradeId];
+      if (upgrade) {
+        const currentLevel = gameState.upgrades[upgradeId] || 0;
+        const cost = upgrade.baseCost * Math.pow(upgrade.costMultiplier, currentLevel - 1);
+        newState = recordExpense(newState, cost);
+      }
       onUpdateState(newState);
     }
   };
 
   const handleHireStaff = (staffTypeId: string) => {
-    const newState = hireStaff(gameState, staffTypeId);
+    let newState = hireStaff(gameState, staffTypeId);
     if (newState) {
+      // Record hire cost as expense
+      const staffType = STAFF_TYPES[staffTypeId];
+      if (staffType) {
+        newState = recordExpense(newState, staffType.hireCoat);
+      }
       onUpdateState(newState);
     }
   };
@@ -135,6 +160,13 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
 
   const handleStartResearch = (upgradeId: string) => {
     const newState = startResearch(gameState, upgradeId);
+    if (newState) {
+      onUpdateState(newState);
+    }
+  };
+
+  const handlePayTaxes = () => {
+    const newState = payTaxes(gameState);
     if (newState) {
       onUpdateState(newState);
     }
@@ -248,6 +280,30 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           {pinnedWidgets.includes('market') && (
             <Panel title="Market Prices">
               <QuickMarket gameState={gameState} onViewDetails={() => setModalView('market')} />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('staff') && (
+            <Panel title="Staff">
+              <QuickStaff gameState={gameState} onViewDetails={() => setModalView('staff')} />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('research') && (
+            <Panel title="Research">
+              <QuickResearch gameState={gameState} onViewDetails={() => setModalView('research')} />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('financials') && (
+            <Panel title="Fiscal Overview">
+              <QuickFinancials gameState={gameState} onPayTaxes={handlePayTaxes} />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('analytics') && (
+            <Panel title="Analytics">
+              <QuickAnalytics gameState={gameState} />
             </Panel>
           )}
 
@@ -451,6 +507,50 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
                       type="checkbox"
                       checked={pinnedWidgets.includes('production')}
                       onChange={() => toggleWidget('production')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Staff</td>
+                  <td>Staff overview with utilization stats</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('staff')}
+                      onChange={() => toggleWidget('staff')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Research</td>
+                  <td>Current research progress and intern count</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('research')}
+                      onChange={() => toggleWidget('research')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Financials</td>
+                  <td>Quarterly performance, taxes, and productivity</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('financials')}
+                      onChange={() => toggleWidget('financials')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Analytics</td>
+                  <td>Historical charts and performance trends</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('analytics')}
+                      onChange={() => toggleWidget('analytics')}
                     />
                   </td>
                 </tr>

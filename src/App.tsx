@@ -4,6 +4,7 @@ import { loadGame, saveGame, createNewGame } from './utils/saveSystem';
 import { processMachineProduction, checkAndUnlockMachines } from './utils/productionSystem';
 import { updateMarketPrices, recoverDemand } from './utils/marketSystem';
 import { processStaffProduction, paySalaries, processResearch } from './utils/staffSystem';
+import { processQuarterEnd, updateProductivity } from './utils/fiscalSystem';
 import { SetupScreen } from './components/screens/SetupScreen';
 import { ProductionScreen } from './components/screens/ProductionScreen';
 import './styles/erpTheme.css';
@@ -60,6 +61,12 @@ export function App() {
 
         // Recover demand gradually
         newState = recoverDemand(newState);
+
+        // Update productivity rating
+        newState = updateProductivity(newState);
+
+        // Process quarter end (checks interval internally)
+        newState = processQuarterEnd(newState);
 
         return newState;
       });
