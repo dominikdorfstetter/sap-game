@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { GameState } from '../../types/game.types';
+import { GameState, DashboardWidget } from '../../types/game.types';
 import { ITEMS } from '../../data/items';
 import { RECIPES } from '../../data/recipes';
 import { purchaseMachine } from '../../utils/productionSystem';
@@ -8,6 +8,11 @@ import { purchaseUpgrade, getSellQuantities } from '../../utils/upgradeSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
+import { Modal } from '../ui/Modal';
+import { QuickActions } from '../widgets/QuickActions';
+import { QuickInventory } from '../widgets/QuickInventory';
+import { QuickMachines } from '../widgets/QuickMachines';
+import { QuickMarket } from '../widgets/QuickMarket';
 import { MachinePanel } from '../game/MachinePanel';
 import { UpgradePanel } from '../game/UpgradePanel';
 import { MarketPanel } from '../game/MarketPanel';
@@ -17,6 +22,8 @@ interface ProductionScreenProps {
   onUpdateState: (state: GameState) => void;
 }
 
+type ModalView = 'production' | 'machines' | 'market' | 'upgrades' | 'inventory' | 'customize' | null;
+
 export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenProps) {
   const [activeProduction, setActiveProduction] = useState<{
     recipeId: string;
@@ -24,17 +31,16 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     duration: number;
   } | null>(null);
   const [productionProgress, setProductionProgress] = useState(0);
-  const [selectedTab, setSelectedTab] = useState<'production' | 'market' | 'upgrades'>('production');
+  const [modalView, setModalView] = useState<ModalView>(null);
 
   // Handle manual production
   const startProduction = (recipeId: string) => {
     const recipe = RECIPES[recipeId];
 
-    // Check if we have all required inputs
     for (const input of recipe.inputs) {
       const currentAmount = gameState.inventory[input.itemId] || 0;
       if (currentAmount < input.amount) {
-        return; // Not enough materials
+        return;
       }
     }
 
@@ -46,7 +52,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     setProductionProgress(0);
   };
 
-  // Update progress bar
   useEffect(() => {
     if (!activeProduction) return;
 
@@ -55,7 +60,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
       const progress = (elapsed / activeProduction.duration) * 100;
 
       if (progress >= 100) {
-        // Production complete!
         completeProduction(activeProduction.recipeId);
         setActiveProduction(null);
         setProductionProgress(0);
@@ -71,12 +75,10 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     const recipe = RECIPES[recipeId];
     const newState = { ...gameState };
 
-    // Consume all inputs
     for (const input of recipe.inputs) {
       newState.inventory[input.itemId] -= input.amount;
     }
 
-    // Add output
     newState.inventory[recipe.output.itemId] =
       (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
 
@@ -92,8 +94,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
 
     newState.inventory[itemId] -= amount;
     newState.company.cash += price * amount;
-
-    // Adjust market demand based on quantity sold
     newState = adjustDemand(newState, itemId, amount);
 
     onUpdateState(newState);
@@ -113,9 +113,20 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     }
   };
 
-  const formatMoney = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+  const toggleWidget = (widget: DashboardWidget) => {
+    const newState = { ...gameState };
+    const pinned = newState.preferences.pinnedWidgets;
+
+    if (pinned.includes(widget)) {
+      newState.preferences.pinnedWidgets = pinned.filter((w) => w !== widget);
+    } else {
+      newState.preferences.pinnedWidgets = [...pinned, widget];
+    }
+
+    onUpdateState(newState);
   };
+
+  const formatMoney = (amount: number) => `$${amount.toFixed(2)}`;
 
   const canProduce = (recipeId: string) => {
     if (activeProduction) return false;
@@ -143,152 +154,282 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
 
   const sellQuantities = getSellQuantities(gameState);
 
+  const pinnedWidgets = gameState.preferences.pinnedWidgets;
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#E5E5E5' }}>
       {/* Header */}
-      <div className="sap-header">
-        <div className="sap-header-title">
-          SAP Production Manager | {gameState.company.name}
-        </div>
-        <div className="sap-header-info">
+      <div className="erp-header">
+        <div className="erp-header-title">ERP Production Manager | {gameState.company.name}</div>
+        <div className="erp-header-info">
           Cash: <span className="money">{formatMoney(gameState.company.cash)}</span>
+          <button
+            onClick={() => setModalView('customize')}
+            style={{
+              marginLeft: '16px',
+              background: 'none',
+              border: '1px solid white',
+              color: 'white',
+              padding: '4px 12px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            ⚙ Customize
+          </button>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div style={{ padding: '8px 16px', backgroundColor: '#CCC', borderBottom: '2px solid #666' }}>
-        <Button
-          onClick={() => setSelectedTab('production')}
-          primary={selectedTab === 'production'}
-        >
-          Production
-        </Button>
-        <Button
-          onClick={() => setSelectedTab('market')}
-          primary={selectedTab === 'market'}
-        >
-          Market
-        </Button>
-        <Button
-          onClick={() => setSelectedTab('upgrades')}
-          primary={selectedTab === 'upgrades'}
-        >
-          Upgrades
-        </Button>
-      </div>
-
+      {/* Minimal Dashboard */}
       <div style={{ padding: '16px' }}>
-        {selectedTab === 'production' && (
-          <>
-            {/* Manual Production Section */}
-            <Panel title="Manual Production">
-              <div style={{ marginBottom: '16px' }}>
-                <table className="sap-table">
-                  <thead>
-                    <tr>
-                      <th>Action</th>
-                      <th>Inputs Required</th>
-                      <th>Output</th>
-                      <th>Time</th>
-                      <th style={{ width: '120px' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {unlockedRecipes.map((recipe) => (
-                      <tr key={recipe.id}>
-                        <td>{recipe.name}</td>
-                        <td style={{ fontSize: '11px' }}>{getRecipeInputsDisplay(recipe.id)}</td>
-                        <td>
-                          {recipe.output.amount}x {ITEMS[recipe.output.itemId].name}
-                        </td>
-                        <td>{(recipe.productionTime / 1000).toFixed(1)}s</td>
-                        <td>
-                          <Button
-                            onClick={() => startProduction(recipe.id)}
-                            disabled={!canProduce(recipe.id)}
-                          >
-                            Craft
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '16px',
+          }}
+        >
+          {pinnedWidgets.includes('quickActions') && (
+            <Panel title="Quick Actions">
+              <QuickActions
+                onOpenProduction={() => setModalView('production')}
+                onOpenMarket={() => setModalView('market')}
+                onOpenUpgrades={() => setModalView('upgrades')}
+                onOpenMachines={() => setModalView('machines')}
+              />
+            </Panel>
+          )}
 
-              {activeProduction && (
-                <div>
-                  <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
-                    Producing: {RECIPES[activeProduction.recipeId].name}
-                  </div>
-                  <ProgressBar progress={productionProgress} />
+          {pinnedWidgets.includes('inventory') && (
+            <Panel title="Inventory">
+              <QuickInventory
+                gameState={gameState}
+                onSell={sellItem}
+                onViewDetails={() => setModalView('inventory')}
+              />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('machines') && (
+            <Panel title="Machines">
+              <QuickMachines gameState={gameState} onViewDetails={() => setModalView('machines')} />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('market') && (
+            <Panel title="Market Prices">
+              <QuickMarket gameState={gameState} onViewDetails={() => setModalView('market')} />
+            </Panel>
+          )}
+
+          {pinnedWidgets.includes('production') && activeProduction && (
+            <Panel title="Current Production">
+              <div>
+                <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
+                  {RECIPES[activeProduction.recipeId].name}
                 </div>
-              )}
+                <ProgressBar progress={productionProgress} />
+              </div>
             </Panel>
+          )}
+        </div>
 
-            {/* Machine Automation */}
-            <MachinePanel gameState={gameState} onPurchase={handlePurchaseMachine} />
-
-            {/* Inventory Section */}
-            <Panel title="Inventory & Selling">
-              <table className="sap-table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Market Price</th>
-                    <th>Total Value</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.keys(ITEMS).map((itemId) => {
-                    const item = ITEMS[itemId];
-                    const quantity = gameState.inventory[itemId] || 0;
-                    const price = getCurrentPrice(gameState, itemId);
-                    const totalValue = quantity * price;
-
-                    return (
-                      <tr key={itemId}>
-                        <td>
-                          <div style={{ fontWeight: 'bold' }}>{item.name}</div>
-                          <div style={{ fontSize: '10px', color: '#666' }}>
-                            Tier {item.tier}
-                          </div>
-                        </td>
-                        <td style={{ fontFamily: 'Courier New', textAlign: 'right' }}>
-                          {quantity}
-                        </td>
-                        <td className="money">{formatMoney(price)}</td>
-                        <td className="money">{formatMoney(totalValue)}</td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            {sellQuantities.map((qty) => (
-                              <Button
-                                key={qty}
-                                onClick={() => sellItem(itemId, Math.min(qty, quantity))}
-                                disabled={quantity < 1}
-                              >
-                                Sell {qty}
-                              </Button>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </Panel>
-          </>
-        )}
-
-        {selectedTab === 'market' && <MarketPanel gameState={gameState} />}
-
-        {selectedTab === 'upgrades' && (
-          <UpgradePanel gameState={gameState} onPurchase={handlePurchaseUpgrade} />
+        {pinnedWidgets.length === 0 && (
+          <Panel title="Welcome">
+            <div style={{ textAlign: 'center', padding: '24px' }}>
+              <p style={{ marginBottom: '16px' }}>
+                Your dashboard is empty. Click <strong>⚙ Customize</strong> in the header to pin widgets.
+              </p>
+              <Button onClick={() => setModalView('customize')} primary>
+                Customize Dashboard
+              </Button>
+            </div>
+          </Panel>
         )}
       </div>
+
+      {/* Modals */}
+      {modalView === 'production' && (
+        <Modal title="Production" onClose={() => setModalView(null)} width="900px">
+          <table className="erp-table">
+            <thead>
+              <tr>
+                <th>Action</th>
+                <th>Inputs Required</th>
+                <th>Output</th>
+                <th>Time</th>
+                <th style={{ width: '120px' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {unlockedRecipes.map((recipe) => (
+                <tr key={recipe.id}>
+                  <td>{recipe.name}</td>
+                  <td style={{ fontSize: '11px' }}>{getRecipeInputsDisplay(recipe.id)}</td>
+                  <td>
+                    {recipe.output.amount}x {ITEMS[recipe.output.itemId].name}
+                  </td>
+                  <td>{(recipe.productionTime / 1000).toFixed(1)}s</td>
+                  <td>
+                    <Button
+                      onClick={() => {
+                        startProduction(recipe.id);
+                        setModalView(null);
+                      }}
+                      disabled={!canProduce(recipe.id)}
+                    >
+                      Craft
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Modal>
+      )}
+
+      {modalView === 'inventory' && (
+        <Modal title="Full Inventory" onClose={() => setModalView(null)} width="900px">
+          <table className="erp-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Market Price</th>
+                <th>Total Value</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(ITEMS).map((itemId) => {
+                const item = ITEMS[itemId];
+                const quantity = gameState.inventory[itemId] || 0;
+                const price = getCurrentPrice(gameState, itemId);
+                const totalValue = quantity * price;
+
+                return (
+                  <tr key={itemId}>
+                    <td>
+                      <div style={{ fontWeight: 'bold' }}>{item.name}</div>
+                      <div style={{ fontSize: '10px', color: '#666' }}>Tier {item.tier}</div>
+                    </td>
+                    <td style={{ fontFamily: 'Courier New', textAlign: 'right' }}>{quantity}</td>
+                    <td className="money">{formatMoney(price)}</td>
+                    <td className="money">{formatMoney(totalValue)}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {sellQuantities.map((qty) => (
+                          <Button
+                            key={qty}
+                            onClick={() => sellItem(itemId, Math.min(qty, quantity))}
+                            disabled={quantity < 1}
+                          >
+                            Sell {qty}
+                          </Button>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </Modal>
+      )}
+
+      {modalView === 'machines' && (
+        <Modal title="Machines & Automation" onClose={() => setModalView(null)} width="900px">
+          <MachinePanel gameState={gameState} onPurchase={handlePurchaseMachine} />
+        </Modal>
+      )}
+
+      {modalView === 'market' && (
+        <Modal title="Market Prices" onClose={() => setModalView(null)} width="900px">
+          <MarketPanel gameState={gameState} />
+        </Modal>
+      )}
+
+      {modalView === 'upgrades' && (
+        <Modal title="Upgrades" onClose={() => setModalView(null)} width="900px">
+          <UpgradePanel gameState={gameState} onPurchase={handlePurchaseUpgrade} />
+        </Modal>
+      )}
+
+      {modalView === 'customize' && (
+        <Modal title="Customize Dashboard" onClose={() => setModalView(null)} width="600px">
+          <div>
+            <p style={{ marginBottom: '16px' }}>
+              Pin widgets to your dashboard for quick access. Click deeper functionality when needed.
+            </p>
+            <table className="erp-table">
+              <thead>
+                <tr>
+                  <th>Widget</th>
+                  <th>Description</th>
+                  <th style={{ width: '100px' }}>Pinned</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Quick Actions</td>
+                  <td>Fast access buttons to all main features</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('quickActions')}
+                      onChange={() => toggleWidget('quickActions')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Inventory</td>
+                  <td>Top items with quick sell buttons</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('inventory')}
+                      onChange={() => toggleWidget('inventory')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Machines</td>
+                  <td>Active machine status and progress</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('machines')}
+                      onChange={() => toggleWidget('machines')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Market</td>
+                  <td>Current market prices overview</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('market')}
+                      onChange={() => toggleWidget('market')}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Production</td>
+                  <td>Shows progress when crafting manually</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={pinnedWidgets.includes('production')}
+                      onChange={() => toggleWidget('production')}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

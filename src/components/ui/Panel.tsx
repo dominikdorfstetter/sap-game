@@ -7,9 +7,9 @@ interface PanelProps {
 
 export function Panel({ title, children }: PanelProps) {
   return (
-    <div className="sap-panel">
-      <div className="sap-panel-header">{title}</div>
-      <div className="sap-panel-content">{children}</div>
+    <div className="erp-panel">
+      <div className="erp-panel-header">{title}</div>
+      <div className="erp-panel-content">{children}</div>
     </div>
   );
 }

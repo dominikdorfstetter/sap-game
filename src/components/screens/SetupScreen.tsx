@@ -19,16 +19,16 @@ export function SetupScreen({ onComplete }: SetupScreenProps) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '500px' }}>
-        <div className="sap-header" style={{ marginBottom: '0' }}>
-          <div className="sap-header-title">SAP Production Manager - Setup</div>
+        <div className="erp-header" style={{ marginBottom: '0' }}>
+          <div className="erp-header-title">ERP Production Manager - Setup</div>
         </div>
         <Panel title="Company Setup">
           <form onSubmit={handleSubmit}>
             <div className="mb-md">
-              <label className="sap-label">Company Name:</label>
+              <label className="erp-label">Company Name:</label>
               <input
                 type="text"
-                className="sap-input"
+                className="erp-input"
                 value={companyName}
                 onInput={(e) => setCompanyName((e.target as HTMLInputElement).value)}
                 placeholder="Enter company name"

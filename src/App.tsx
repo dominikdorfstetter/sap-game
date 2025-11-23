@@ -5,7 +5,7 @@ import { processMachineProduction, checkAndUnlockMachines } from './utils/produc
 import { updateMarketPrices, recoverDemand } from './utils/marketSystem';
 import { SetupScreen } from './components/screens/SetupScreen';
 import { ProductionScreen } from './components/screens/ProductionScreen';
-import './styles/sapTheme.css';
+import './styles/erpTheme.css';
 
 export function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);

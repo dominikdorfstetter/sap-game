@@ -46,7 +46,7 @@ export function MarketPanel({ gameState }: MarketPanelProps) {
 
   return (
     <Panel title="Market - Current Prices">
-      <table className="sap-table">
+      <table className="erp-table">
         <thead>
           <tr>
             <th>Item</th>

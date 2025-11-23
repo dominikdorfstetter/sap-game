@@ -44,6 +44,13 @@ export function loadGame(): GameState | null {
       }
     }
 
+    // Migrate preferences
+    if (!loadedState.preferences) {
+      loadedState.preferences = {
+        pinnedWidgets: ['quickActions', 'inventory'],
+      };
+    }
+
     return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -73,6 +80,9 @@ export function createNewGame(companyName: string): GameState {
     upgrades: {},
     market: initializeMarket(),
     unlockedRecipes: ['mine_ore', 'smelt_ingot', 'craft_screw'],
+    preferences: {
+      pinnedWidgets: ['quickActions', 'inventory'],
+    },
     lastTick: Date.now(),
     initialized: true,
   };

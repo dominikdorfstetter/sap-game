@@ -9,7 +9,7 @@ interface ButtonProps {
 }
 
 export function Button({ onClick, disabled, primary, children, type = 'button' }: ButtonProps) {
-  const className = primary ? 'sap-button sap-button-primary' : 'sap-button';
+  const className = primary ? 'erp-button erp-button-primary' : 'erp-button';
 
   return (
     <button

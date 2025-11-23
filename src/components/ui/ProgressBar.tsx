@@ -6,9 +6,9 @@ export function ProgressBar({ progress }: ProgressBarProps) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
   return (
-    <div className="sap-progress">
+    <div className="erp-progress">
       <div
-        className="sap-progress-bar"
+        className="erp-progress-bar"
         style={{ width: `${clampedProgress}%` }}
       />
     </div>

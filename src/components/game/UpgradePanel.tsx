@@ -27,7 +27,7 @@ export function UpgradePanel({ gameState, onPurchase }: UpgradePanelProps) {
         <h3 style={{ marginBottom: '8px', textTransform: 'uppercase', fontSize: '13px' }}>
           {title}
         </h3>
-        <table className="sap-table">
+        <table className="erp-table">
           <thead>
             <tr>
               <th>Upgrade</th>

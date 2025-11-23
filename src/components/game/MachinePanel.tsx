@@ -27,7 +27,7 @@ export function MachinePanel({ gameState, onPurchase }: MachinePanelProps) {
 
   return (
     <Panel title="Automation - Purchase Machines">
-      <table className="sap-table">
+      <table className="erp-table">
         <thead>
           <tr>
             <th>Machine</th>
@@ -77,7 +77,7 @@ export function MachinePanel({ gameState, onPurchase }: MachinePanelProps) {
           <div style={{ fontWeight: 'bold', marginBottom: '8px', textTransform: 'uppercase' }}>
             Active Machines
           </div>
-          <table className="sap-table">
+          <table className="erp-table">
             <thead>
               <tr>
                 <th>Machine</th>

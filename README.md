@@ -1,6 +1,6 @@
-# SAP Production Manager - Idle Game
+# ERP Production Manager - Idle Game
 
-A vintage SAP-themed idle/incremental game where you manage a production company. Start from mining ore and build up to complex production chains!
+A vintage ERP-themed idle/incremental game where you manage a production company. Start from mining ore and build up to complex production chains!
 
 ## 🎮 Current Features
 
@@ -10,7 +10,7 @@ A vintage SAP-themed idle/incremental game where you manage a production company
 - **Inventory Management**: Track all your materials and products
 - **Selling System**: Sell items at any time for cash
 - **Auto-Save**: Game automatically saves every 10 seconds
-- **Vintage SAP UI**: Classic enterprise software aesthetic with sharp edges, SAP blue, and retro styling
+- **Vintage ERP UI**: Classic enterprise software aesthetic with sharp edges, ERP blue, and retro styling
 
 ### Phase 2 - Automation ✅
 - **Machine Purchase System**: Buy machines to automate production
@@ -104,12 +104,12 @@ npm run preview
 ```
 src/
 ├── components/
-│   ├── ui/           # Reusable SAP-themed components
+│   ├── ui/           # Reusable ERP-themed components
 │   └── screens/      # Game screens (Setup, Production)
 ├── data/             # Game data (items, recipes)
 ├── types/            # TypeScript type definitions
 ├── utils/            # Utilities (save system)
-└── styles/           # SAP theme CSS
+└── styles/           # ERP theme CSS
 ```
 
 ## 🎨 Tech Stack
@@ -117,7 +117,7 @@ src/
 - **Framework**: Preact (lightweight React alternative)
 - **Language**: TypeScript
 - **Build Tool**: Vite
-- **Styling**: Pure CSS (vintage SAP theme)
+- **Styling**: Pure CSS (vintage ERP theme)
 - **State**: Preact hooks
 - **Storage**: localStorage
 
@@ -133,7 +133,7 @@ src/
 - **Start Simple**: Begin with the absolute basics (mining ore)
 - **Strategic Choices**: Sell now vs. invest in production
 - **Satisfying Feedback**: Watch numbers grow and progress bars fill
-- **Vintage Aesthetic**: Embrace classic SAP enterprise software look
+- **Vintage Aesthetic**: Embrace classic ERP enterprise software look
 - **Modular Design**: Easy to expand with new items, recipes, and features
 
 ## 📝 License

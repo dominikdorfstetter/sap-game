@@ -1,4 +1,4 @@
-// Core game types for SAP Production Manager
+// Core game types for ERP Production Manager
 
 export interface GameState {
   company: Company;
@@ -8,6 +8,7 @@ export interface GameState {
   upgrades: UpgradeState;
   market: MarketState;
   unlockedRecipes: string[];
+  preferences: UserPreferences;
   lastTick: number;
   initialized: boolean;
 }
@@ -90,4 +91,10 @@ export interface MarketState {
   priceHistory: { [itemId: string]: number[] }; // Last 10 price points
   demandModifiers: { [itemId: string]: number }; // Supply/demand multipliers
   lastPriceUpdate: number;
+}
+
+export type DashboardWidget = 'quickActions' | 'inventory' | 'machines' | 'market' | 'production';
+
+export interface UserPreferences {
+  pinnedWidgets: DashboardWidget[];
 }
