@@ -1,4 +1,4 @@
-import { GameState } from '../types/game.types';
+import { GameState, CompanyType } from '../types/game.types';
 import { initializeMarket } from './marketSystem';
 import { createInitialFiscalState } from './fiscalSystem';
 import { ITEMS } from '../data/items';
@@ -84,6 +84,11 @@ export function loadGame(): GameState | null {
       loadedState.scouting = null;
     }
 
+    // Migrate company type (default to steel for old saves)
+    if (!loadedState.company.type) {
+      loadedState.company.type = 'steel';
+    }
+
     return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -95,24 +100,38 @@ export function deleteSave(): void {
   localStorage.removeItem(SAVE_KEY);
 }
 
-export function createNewGame(companyName: string): GameState {
+export function createNewGame(companyName: string, companyType: CompanyType = 'steel'): GameState {
   const inventory: { [key: string]: number } = {};
   for (const itemId of Object.keys(ITEMS)) {
     inventory[itemId] = 0;
   }
+
+  // Different starting paths based on company type
+  const woodPath = {
+    unlockedMachines: ['wood_logger', 'sand_gatherer'],
+    unlockedRecipes: ['chop_wood', 'gather_sand', 'cut_wood_plank', 'make_glass', 'craft_nail'],
+  };
+
+  const steelPath = {
+    unlockedMachines: ['ore_extractor', 'coal_miner'],
+    unlockedRecipes: ['mine_ore', 'mine_coal', 'smelt_ingot', 'forge_steel', 'craft_screw', 'craft_plate', 'craft_wire'],
+  };
+
+  const pathConfig = companyType === 'wood' ? woodPath : steelPath;
 
   return {
     company: {
       name: companyName,
       founded: Date.now(),
       cash: 0,
+      type: companyType,
     },
     inventory,
     machines: [],
-    unlockedMachines: ['ore_extractor'],
+    unlockedMachines: pathConfig.unlockedMachines,
     upgrades: {},
     market: initializeMarket(),
-    unlockedRecipes: ['mine_ore', 'chop_wood', 'mine_coal', 'smelt_ingot', 'cut_wood_plank', 'craft_screw'],
+    unlockedRecipes: pathConfig.unlockedRecipes,
     staff: [],
     research: {
       current: null,

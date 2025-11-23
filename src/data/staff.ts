@@ -220,26 +220,32 @@ export const STAFF_TYPES: Record<string, StaffType> = {
 };
 
 // Research times for upgrades (base time in seconds with 1 intern)
+// Times are significantly longer - hire multiple interns to speed up research!
+// Each additional intern reduces time linearly (2 interns = half time, 3 = third time, etc.)
 export const RESEARCH_TIMES: Record<string, number> = {
-  // Selling upgrades - quick research
-  sell_quantity_1: 30,
-  sell_quantity_2: 60,
-  sell_quantity_3: 120,
+  // Selling upgrades - medium research
+  sell_quantity_1: 120,  // 2 minutes
+  sell_quantity_2: 240,  // 4 minutes
+  sell_quantity_3: 480,  // 8 minutes
 
-  // Market upgrades - medium research
-  market_research: 45,
-  price_floor_basic: 60,
-  price_floor_advanced: 180,
+  // Market upgrades - longer research
+  market_research: 180,  // 3 minutes
+  price_floor_basic: 300,  // 5 minutes
+  price_floor_advanced: 600,  // 10 minutes
 
-  // Production upgrades - ongoing research
-  production_speed: 30,
-  automation_speed: 45,
+  // Production upgrades - medium-long research
+  production_speed: 150,  // 2.5 minutes
+  automation_speed: 200,  // ~3.3 minutes
 
-  // Unlock upgrades - longer research
-  unlock_tier3: 90,
-  unlock_tier4: 180,
-  unlock_tier5: 300,
-  unlock_tier6: 600,
+  // Unlock upgrades - very long research
+  unlock_tier3: 360,  // 6 minutes
+  unlock_tier4: 720,  // 12 minutes
+  unlock_tier5: 1200,  // 20 minutes
+  unlock_tier6: 1800,  // 30 minutes
+
+  // Path unlocks - extremely long research (unlock alternate company path)
+  unlock_wood_path: 2400,  // 40 minutes with 1 intern
+  unlock_steel_path: 2400,  // 40 minutes with 1 intern
 };
 
 // Rarity weights for random hiring

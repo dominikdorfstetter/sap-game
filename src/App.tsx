@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { GameState, GameScreen } from './types/game.types';
+import { GameState, GameScreen, CompanyType } from './types/game.types';
 import { loadGame, saveGame, createNewGame } from './utils/saveSystem';
 import { processMachineProduction, checkAndUnlockMachines } from './utils/productionSystem';
 import { updateMarketPrices, recoverDemand } from './utils/marketSystem';
@@ -84,8 +84,8 @@ export function App() {
     };
   }, [gameState]);
 
-  const handleStartGame = (companyName: string) => {
-    const newGame = createNewGame(companyName);
+  const handleStartGame = (companyName: string, companyType: CompanyType) => {
+    const newGame = createNewGame(companyName, companyType);
     setGameState(newGame);
     setCurrentScreen('production');
     saveGame(newGame);

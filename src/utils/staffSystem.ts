@@ -243,7 +243,9 @@ export function processResearch(gameState: GameState, deltaTime: number): GameSt
   }
 
   const baseTime = (RESEARCH_TIMES[project.upgradeId] || 60) * 1000; // Convert to ms
-  const researchSpeed = Math.sqrt(currentInterns); // Diminishing returns
+  // Linear scaling: Each intern contributes equally
+  // 2 interns = 2x speed (half time), 3 interns = 3x speed (third time)
+  const researchSpeed = currentInterns;
 
   const progressIncrease = ((deltaTime / baseTime) * researchSpeed) * 100;
   project.progress += progressIncrease;

@@ -18,10 +18,13 @@ export interface GameState {
   initialized: boolean;
 }
 
+export type CompanyType = 'wood' | 'steel';
+
 export interface Company {
   name: string;
   founded: number;
   cash: number;
+  type: CompanyType; // Wood-oriented or Steel-oriented
 }
 
 export interface Inventory {
