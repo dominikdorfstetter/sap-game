@@ -28,23 +28,27 @@ export function processMachineProduction(
       const completedCycles = Math.floor(newProgress / 100);
 
       for (let i = 0; i < completedCycles; i++) {
-        // Check if we have enough input materials
-        if (recipe.input) {
-          const currentAmount = newState.inventory[recipe.input.itemId] || 0;
-          if (currentAmount >= recipe.input.amount) {
-            // Consume input
-            newState.inventory[recipe.input.itemId] -= recipe.input.amount;
-            // Add output
-            newState.inventory[recipe.output.itemId] =
-              (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
-          } else {
-            // Not enough materials, machine becomes idle
+        // Check if we have enough input materials for all inputs
+        let hasAllMaterials = true;
+        for (const input of recipe.inputs) {
+          const currentAmount = newState.inventory[input.itemId] || 0;
+          if (currentAmount < input.amount) {
+            hasAllMaterials = false;
             break;
           }
-        } else {
-          // No input required, just produce
+        }
+
+        if (hasAllMaterials) {
+          // Consume all inputs
+          for (const input of recipe.inputs) {
+            newState.inventory[input.itemId] -= input.amount;
+          }
+          // Add output
           newState.inventory[recipe.output.itemId] =
             (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
+        } else {
+          // Not enough materials, machine becomes idle
+          break;
         }
       }
 

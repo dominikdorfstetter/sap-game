@@ -3,10 +3,14 @@ import { GameState } from '../../types/game.types';
 import { ITEMS } from '../../data/items';
 import { RECIPES } from '../../data/recipes';
 import { purchaseMachine } from '../../utils/productionSystem';
+import { getCurrentPrice, adjustDemand } from '../../utils/marketSystem';
+import { purchaseUpgrade, getSellQuantities } from '../../utils/upgradeSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
 import { MachinePanel } from '../game/MachinePanel';
+import { UpgradePanel } from '../game/UpgradePanel';
+import { MarketPanel } from '../game/MarketPanel';
 
 interface ProductionScreenProps {
   gameState: GameState;
@@ -20,15 +24,16 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     duration: number;
   } | null>(null);
   const [productionProgress, setProductionProgress] = useState(0);
+  const [selectedTab, setSelectedTab] = useState<'production' | 'market' | 'upgrades'>('production');
 
   // Handle manual production
   const startProduction = (recipeId: string) => {
     const recipe = RECIPES[recipeId];
 
-    // Check if we have required input
-    if (recipe.input) {
-      const currentAmount = gameState.inventory[recipe.input.itemId] || 0;
-      if (currentAmount < recipe.input.amount) {
+    // Check if we have all required inputs
+    for (const input of recipe.inputs) {
+      const currentAmount = gameState.inventory[input.itemId] || 0;
+      if (currentAmount < input.amount) {
         return; // Not enough materials
       }
     }
@@ -66,9 +71,9 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     const recipe = RECIPES[recipeId];
     const newState = { ...gameState };
 
-    // Consume input
-    if (recipe.input) {
-      newState.inventory[recipe.input.itemId] -= recipe.input.amount;
+    // Consume all inputs
+    for (const input of recipe.inputs) {
+      newState.inventory[input.itemId] -= input.amount;
     }
 
     // Add output
@@ -79,22 +84,32 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
   };
 
   const sellItem = (itemId: string, amount: number) => {
-    const item = ITEMS[itemId];
     const currentAmount = gameState.inventory[itemId] || 0;
-
     if (currentAmount < amount) return;
 
-    const newState = { ...gameState };
+    const price = getCurrentPrice(gameState, itemId);
+    let newState = { ...gameState };
+
     newState.inventory[itemId] -= amount;
-    newState.company.cash += item.basePrice * amount;
+    newState.company.cash += price * amount;
+
+    // Adjust market demand based on quantity sold
+    newState = adjustDemand(newState, itemId, amount);
 
     onUpdateState(newState);
   };
 
-  const sellAll = (itemId: string) => {
-    const amount = gameState.inventory[itemId] || 0;
-    if (amount > 0) {
-      sellItem(itemId, amount);
+  const handlePurchaseMachine = (machineId: string) => {
+    const newState = purchaseMachine(gameState, machineId);
+    if (newState) {
+      onUpdateState(newState);
+    }
+  };
+
+  const handlePurchaseUpgrade = (upgradeId: string) => {
+    const newState = purchaseUpgrade(gameState, upgradeId);
+    if (newState) {
+      onUpdateState(newState);
     }
   };
 
@@ -106,18 +121,27 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     if (activeProduction) return false;
 
     const recipe = RECIPES[recipeId];
-    if (!recipe.input) return true;
-
-    const currentAmount = gameState.inventory[recipe.input.itemId] || 0;
-    return currentAmount >= recipe.input.amount;
-  };
-
-  const handlePurchaseMachine = (machineId: string) => {
-    const newState = purchaseMachine(gameState, machineId);
-    if (newState) {
-      onUpdateState(newState);
+    for (const input of recipe.inputs) {
+      const currentAmount = gameState.inventory[input.itemId] || 0;
+      if (currentAmount < input.amount) return false;
     }
+    return true;
   };
+
+  const getRecipeInputsDisplay = (recipeId: string): string => {
+    const recipe = RECIPES[recipeId];
+    if (recipe.inputs.length === 0) return '-';
+
+    return recipe.inputs
+      .map((input) => `${input.amount}x ${ITEMS[input.itemId].name}`)
+      .join(', ');
+  };
+
+  const unlockedRecipes = Object.values(RECIPES).filter(
+    (recipe) => gameState.unlockedRecipes.includes(recipe.id) || recipe.unlocked
+  );
+
+  const sellQuantities = getSellQuantities(gameState);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#E5E5E5' }}>
@@ -131,136 +155,139 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div style={{ padding: '8px 16px', backgroundColor: '#CCC', borderBottom: '2px solid #666' }}>
+        <Button
+          onClick={() => setSelectedTab('production')}
+          primary={selectedTab === 'production'}
+        >
+          Production
+        </Button>
+        <Button
+          onClick={() => setSelectedTab('market')}
+          primary={selectedTab === 'market'}
+        >
+          Market
+        </Button>
+        <Button
+          onClick={() => setSelectedTab('upgrades')}
+          primary={selectedTab === 'upgrades'}
+        >
+          Upgrades
+        </Button>
+      </div>
+
       <div style={{ padding: '16px' }}>
-        {/* Manual Production Section */}
-        <Panel title="Manual Production">
-          <div style={{ marginBottom: '16px' }}>
-            <table className="sap-table">
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Input</th>
-                  <th>Output</th>
-                  <th>Time</th>
-                  <th style={{ width: '150px' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{RECIPES.mine_ore.name}</td>
-                  <td>-</td>
-                  <td>{ITEMS.ore.name}</td>
-                  <td>1.0s</td>
-                  <td>
-                    <Button
-                      onClick={() => startProduction('mine_ore')}
-                      disabled={!canProduce('mine_ore')}
-                    >
-                      Mine
-                    </Button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>{RECIPES.smelt_ingot.name}</td>
-                  <td>1x {ITEMS.ore.name}</td>
-                  <td>{ITEMS.ingot.name}</td>
-                  <td>2.0s</td>
-                  <td>
-                    <Button
-                      onClick={() => startProduction('smelt_ingot')}
-                      disabled={!canProduce('smelt_ingot')}
-                    >
-                      Smelt
-                    </Button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>{RECIPES.craft_screw.name}</td>
-                  <td>1x {ITEMS.ingot.name}</td>
-                  <td>{ITEMS.screw.name}</td>
-                  <td>3.0s</td>
-                  <td>
-                    <Button
-                      onClick={() => startProduction('craft_screw')}
-                      disabled={!canProduce('craft_screw')}
-                    >
-                      Craft
-                    </Button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {activeProduction && (
-            <div>
-              <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
-                Producing: {RECIPES[activeProduction.recipeId].name}
+        {selectedTab === 'production' && (
+          <>
+            {/* Manual Production Section */}
+            <Panel title="Manual Production">
+              <div style={{ marginBottom: '16px' }}>
+                <table className="sap-table">
+                  <thead>
+                    <tr>
+                      <th>Action</th>
+                      <th>Inputs Required</th>
+                      <th>Output</th>
+                      <th>Time</th>
+                      <th style={{ width: '120px' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {unlockedRecipes.map((recipe) => (
+                      <tr key={recipe.id}>
+                        <td>{recipe.name}</td>
+                        <td style={{ fontSize: '11px' }}>{getRecipeInputsDisplay(recipe.id)}</td>
+                        <td>
+                          {recipe.output.amount}x {ITEMS[recipe.output.itemId].name}
+                        </td>
+                        <td>{(recipe.productionTime / 1000).toFixed(1)}s</td>
+                        <td>
+                          <Button
+                            onClick={() => startProduction(recipe.id)}
+                            disabled={!canProduce(recipe.id)}
+                          >
+                            Craft
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <ProgressBar progress={productionProgress} />
-            </div>
-          )}
-        </Panel>
 
-        {/* Inventory Section */}
-        <Panel title="Inventory">
-          <table className="sap-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total Value</th>
-                <th style={{ width: '150px' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.keys(ITEMS).map((itemId) => {
-                const item = ITEMS[itemId];
-                const quantity = gameState.inventory[itemId] || 0;
-                const totalValue = quantity * item.basePrice;
+              {activeProduction && (
+                <div>
+                  <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
+                    Producing: {RECIPES[activeProduction.recipeId].name}
+                  </div>
+                  <ProgressBar progress={productionProgress} />
+                </div>
+              )}
+            </Panel>
 
-                return (
-                  <tr key={itemId}>
-                    <td>{item.name}</td>
-                    <td style={{ fontFamily: 'Courier New', textAlign: 'right' }}>
-                      {quantity}
-                    </td>
-                    <td className="money">{formatMoney(item.basePrice)}</td>
-                    <td className="money">{formatMoney(totalValue)}</td>
-                    <td>
-                      <Button
-                        onClick={() => sellAll(itemId)}
-                        disabled={quantity === 0}
-                      >
-                        Sell All
-                      </Button>
-                    </td>
+            {/* Machine Automation */}
+            <MachinePanel gameState={gameState} onPurchase={handlePurchaseMachine} />
+
+            {/* Inventory Section */}
+            <Panel title="Inventory & Selling">
+              <table className="sap-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Market Price</th>
+                    <th>Total Value</th>
+                    <th>Actions</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Panel>
+                </thead>
+                <tbody>
+                  {Object.keys(ITEMS).map((itemId) => {
+                    const item = ITEMS[itemId];
+                    const quantity = gameState.inventory[itemId] || 0;
+                    const price = getCurrentPrice(gameState, itemId);
+                    const totalValue = quantity * price;
 
-        {/* Machine Purchase and Automation Section */}
-        <MachinePanel gameState={gameState} onPurchase={handlePurchaseMachine} />
+                    return (
+                      <tr key={itemId}>
+                        <td>
+                          <div style={{ fontWeight: 'bold' }}>{item.name}</div>
+                          <div style={{ fontSize: '10px', color: '#666' }}>
+                            Tier {item.tier}
+                          </div>
+                        </td>
+                        <td style={{ fontFamily: 'Courier New', textAlign: 'right' }}>
+                          {quantity}
+                        </td>
+                        <td className="money">{formatMoney(price)}</td>
+                        <td className="money">{formatMoney(totalValue)}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {sellQuantities.map((qty) => (
+                              <Button
+                                key={qty}
+                                onClick={() => sellItem(itemId, Math.min(qty, quantity))}
+                                disabled={quantity < 1}
+                              >
+                                Sell {qty}
+                              </Button>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </Panel>
+          </>
+        )}
 
-        {/* Statistics Section */}
-        <Panel title="Company Statistics">
-          <div style={{ fontFamily: 'Courier New' }}>
-            <div style={{ marginBottom: '8px' }}>
-              <strong>Company Name:</strong> {gameState.company.name}
-            </div>
-            <div style={{ marginBottom: '8px' }}>
-              <strong>Founded:</strong> {new Date(gameState.company.founded).toLocaleString()}
-            </div>
-            <div>
-              <strong>Current Cash:</strong>{' '}
-              <span className="money">{formatMoney(gameState.company.cash)}</span>
-            </div>
-          </div>
-        </Panel>
+        {selectedTab === 'market' && <MarketPanel gameState={gameState} />}
+
+        {selectedTab === 'upgrades' && (
+          <UpgradePanel gameState={gameState} onPurchase={handlePurchaseUpgrade} />
+        )}
       </div>
     </div>
   );

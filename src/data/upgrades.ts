@@ -1,0 +1,148 @@
+import { Upgrade } from '../types/game.types';
+
+export const UPGRADES: Record<string, Upgrade> = {
+  // Selling Upgrades
+  sell_quantity_1: {
+    id: 'sell_quantity_1',
+    name: 'Bulk Selling I',
+    description: 'Sell 10 items at once',
+    category: 'selling',
+    maxLevel: 1,
+    baseCost: 50,
+    costMultiplier: 1,
+    effects: [{ type: 'sell_quantity', value: 10 }],
+  },
+  sell_quantity_2: {
+    id: 'sell_quantity_2',
+    name: 'Bulk Selling II',
+    description: 'Sell 100 items at once',
+    category: 'selling',
+    maxLevel: 1,
+    baseCost: 500,
+    costMultiplier: 1,
+    effects: [{ type: 'sell_quantity', value: 100 }],
+  },
+  sell_quantity_3: {
+    id: 'sell_quantity_3',
+    name: 'Bulk Selling III',
+    description: 'Sell 1000 items at once',
+    category: 'selling',
+    maxLevel: 1,
+    baseCost: 5000,
+    costMultiplier: 1,
+    effects: [{ type: 'sell_quantity', value: 1000 }],
+  },
+
+  // Market Upgrades
+  market_research: {
+    id: 'market_research',
+    name: 'Market Research',
+    description: 'Increase selling prices by 10% per level',
+    category: 'market',
+    maxLevel: 10,
+    baseCost: 100,
+    costMultiplier: 1.5,
+    effects: [{ type: 'market_bonus', value: 0.1 }],
+  },
+  price_floor_basic: {
+    id: 'price_floor_basic',
+    name: 'Price Floor - Basics',
+    description: 'Ore, Ingots never sell below 80% base price',
+    category: 'market',
+    maxLevel: 1,
+    baseCost: 200,
+    costMultiplier: 1,
+    effects: [
+      { type: 'price_floor', value: 0.8, target: 'ore' },
+      { type: 'price_floor', value: 0.8, target: 'ingot' },
+    ],
+  },
+  price_floor_advanced: {
+    id: 'price_floor_advanced',
+    name: 'Price Floor - Advanced',
+    description: 'All items never sell below 90% base price',
+    category: 'market',
+    maxLevel: 1,
+    baseCost: 2000,
+    costMultiplier: 1,
+    effects: [{ type: 'price_floor', value: 0.9 }],
+  },
+
+  // Production Speed Upgrades
+  production_speed: {
+    id: 'production_speed',
+    name: 'Production Efficiency',
+    description: 'Manual production 10% faster per level',
+    category: 'production',
+    maxLevel: 20,
+    baseCost: 75,
+    costMultiplier: 1.4,
+    effects: [{ type: 'production_speed', value: 0.1 }],
+  },
+  automation_speed: {
+    id: 'automation_speed',
+    name: 'Automation Efficiency',
+    description: 'Machine production 15% faster per level',
+    category: 'production',
+    maxLevel: 15,
+    baseCost: 300,
+    costMultiplier: 1.6,
+    effects: [{ type: 'production_speed', value: 0.15 }],
+  },
+
+  // Recipe Unlocks
+  unlock_tier3: {
+    id: 'unlock_tier3',
+    name: 'Advanced Components Research',
+    description: 'Unlock Plate and Wire production',
+    category: 'general',
+    maxLevel: 1,
+    baseCost: 100,
+    costMultiplier: 1,
+    effects: [
+      { type: 'unlock_recipe', value: 1, target: 'craft_plate' },
+      { type: 'unlock_recipe', value: 1, target: 'craft_wire' },
+    ],
+  },
+  unlock_tier4: {
+    id: 'unlock_tier4',
+    name: 'Component Assembly Research',
+    description: 'Unlock Bracket, Hinge, and Spring production',
+    category: 'general',
+    maxLevel: 1,
+    baseCost: 500,
+    costMultiplier: 1,
+    effects: [
+      { type: 'unlock_recipe', value: 1, target: 'craft_bracket' },
+      { type: 'unlock_recipe', value: 1, target: 'craft_hinge' },
+      { type: 'unlock_recipe', value: 1, target: 'craft_spring' },
+    ],
+  },
+  unlock_tier5: {
+    id: 'unlock_tier5',
+    name: 'Complex Assembly Research',
+    description: 'Unlock Door, Cabinet, and Toolbox production',
+    category: 'general',
+    maxLevel: 1,
+    baseCost: 2500,
+    costMultiplier: 1,
+    effects: [
+      { type: 'unlock_recipe', value: 1, target: 'craft_door' },
+      { type: 'unlock_recipe', value: 1, target: 'craft_cabinet' },
+      { type: 'unlock_recipe', value: 1, target: 'craft_toolbox' },
+    ],
+  },
+  unlock_tier6: {
+    id: 'unlock_tier6',
+    name: 'Advanced Manufacturing Research',
+    description: 'Unlock Machinery and Vehicle Frame production',
+    category: 'general',
+    maxLevel: 1,
+    baseCost: 10000,
+    costMultiplier: 1,
+    effects: [
+      { type: 'unlock_recipe', value: 1, target: 'craft_machinery' },
+      { type: 'unlock_recipe', value: 1, target: 'craft_vehicle' },
+    ],
+  },
+};

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { GameState, GameScreen } from './types/game.types';
 import { loadGame, saveGame, createNewGame } from './utils/saveSystem';
 import { processMachineProduction, checkAndUnlockMachines } from './utils/productionSystem';
+import { updateMarketPrices, recoverDemand } from './utils/marketSystem';
 import { SetupScreen } from './components/screens/SetupScreen';
 import { ProductionScreen } from './components/screens/ProductionScreen';
 import './styles/sapTheme.css';
@@ -43,6 +44,12 @@ export function App() {
 
         // Check for new unlocks
         newState = checkAndUnlockMachines(newState);
+
+        // Update market prices (checks interval internally)
+        newState = updateMarketPrices(newState);
+
+        // Recover demand gradually
+        newState = recoverDemand(newState);
 
         return newState;
       });

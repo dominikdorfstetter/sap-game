@@ -1,4 +1,6 @@
 import { GameState } from '../types/game.types';
+import { initializeMarket } from './marketSystem';
+import { ITEMS } from '../data/items';
 
 const SAVE_KEY = 'sap_production_game_save';
 
@@ -18,12 +20,28 @@ export function loadGame(): GameState | null {
 
     const loadedState = JSON.parse(saveData) as any;
 
-    // Migrate old saves that don't have automation fields
+    // Migrate old saves that don't have new fields
     if (!loadedState.machines) {
       loadedState.machines = [];
     }
     if (!loadedState.unlockedMachines) {
       loadedState.unlockedMachines = ['ore_extractor'];
+    }
+    if (!loadedState.upgrades) {
+      loadedState.upgrades = {};
+    }
+    if (!loadedState.market) {
+      loadedState.market = initializeMarket();
+    }
+    if (!loadedState.unlockedRecipes) {
+      loadedState.unlockedRecipes = ['mine_ore', 'smelt_ingot', 'craft_screw'];
+    }
+
+    // Ensure all new items exist in inventory
+    for (const itemId of Object.keys(ITEMS)) {
+      if (loadedState.inventory[itemId] === undefined) {
+        loadedState.inventory[itemId] = 0;
+      }
     }
 
     return loadedState as GameState;
@@ -38,19 +56,23 @@ export function deleteSave(): void {
 }
 
 export function createNewGame(companyName: string): GameState {
+  const inventory: { [key: string]: number } = {};
+  for (const itemId of Object.keys(ITEMS)) {
+    inventory[itemId] = 0;
+  }
+
   return {
     company: {
       name: companyName,
       founded: Date.now(),
       cash: 0,
     },
-    inventory: {
-      ore: 0,
-      ingot: 0,
-      screw: 0,
-    },
+    inventory,
     machines: [],
-    unlockedMachines: ['ore_extractor'], // First machine unlocked from start
+    unlockedMachines: ['ore_extractor'],
+    upgrades: {},
+    market: initializeMarket(),
+    unlockedRecipes: ['mine_ore', 'smelt_ingot', 'craft_screw'],
     lastTick: Date.now(),
     initialized: true,
   };
