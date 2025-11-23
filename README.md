@@ -2,14 +2,11 @@
 
 A vintage SAP-themed idle/incremental game where you manage a production company. Start from mining ore and build up to complex production chains!
 
-## 🎮 Current Features (Phase 1 & 2)
+## 🎮 Current Features
 
 ### Phase 1 - Manual Production ✅
 - **Company Setup**: Name your company and start from scratch
 - **Manual Production**: Click to produce items through a production chain
-  - Mine Iron Ore (1 second)
-  - Smelt Iron Ingots (2 seconds, requires ore)
-  - Craft Screws (3 seconds, requires ingots)
 - **Inventory Management**: Track all your materials and products
 - **Selling System**: Sell items at any time for cash
 - **Auto-Save**: Game automatically saves every 10 seconds
@@ -17,14 +14,38 @@ A vintage SAP-themed idle/incremental game where you manage a production company
 
 ### Phase 2 - Automation ✅
 - **Machine Purchase System**: Buy machines to automate production
-  - Ore Extractor ($100) - automatically mines ore every 5 seconds
-  - Auto-Smelter ($250) - automatically smelts ingots every 8 seconds
-  - Screw Machine ($500) - automatically crafts screws every 10 seconds
 - **Progressive Unlocks**: Machines unlock as you reach cash milestones
 - **Background Processing**: Game continues producing even while idle
 - **Multiple Machines**: Purchase multiple of the same machine type
 - **Machine Status**: Real-time progress bars and status indicators
 - **True Idle Gameplay**: Transition from manual clicking to automated factory
+
+### Phase 3 & 4 - Extended Content & Upgrades ✅
+**13 Items Across 6 Tiers:**
+- Tier 1: Iron Ore
+- Tier 2: Iron Ingot
+- Tier 3: Screw, Metal Plate, Wire
+- Tier 4: Bracket, Hinge, Spring
+- Tier 5: Door, Cabinet, Toolbox
+- Tier 6: Machinery, Vehicle Frame
+
+**14 Complex Recipes:**
+- Multiple input requirements (e.g., Cabinet needs Plate, Door, Bracket, Screws)
+- Unlockable through research upgrades
+
+**11 Upgrades:**
+- Sell Quantity: Sell 1 → 10 → 100 → 1000 at once
+- Market Research: +10% selling price (10 levels)
+- Price Floors: Prevent prices dropping below 80-90% base
+- Production Speed: +10% faster manual production (20 levels)
+- Automation Speed: +15% faster machines (15 levels)
+- Research: Unlock new recipe tiers progressively
+
+**Dynamic Market System:**
+- Live pricing with ±15% fluctuation every 30 seconds
+- Supply/demand: Selling lowers prices temporarily
+- Price history and trend indicators
+- Demand levels and recovery mechanics
 
 ## 🚀 Getting Started
 
@@ -70,11 +91,13 @@ npm run preview
 ### Completed
 - **Phase 1** ✅: Manual clicking, basic production chain, selling
 - **Phase 2** ✅: Machine automation, progressive unlocks, idle gameplay
+- **Phase 3 & 4** ✅: Extended production chains (13 items), upgrades, market simulation
 
-### Coming Soon
-- **Phase 3**: Extended production chains with 10+ items (brackets, hinges, doors, cabinets)
-- **Phase 4**: Research tree and upgrade systems
-- **Phase 5**: Multiple factories, prestige system, workers
+### Coming Soon (Future Phases)
+- **Prestige System**: Reset for permanent bonuses
+- **Workers**: Hire employees for production multipliers
+- **Multiple Factories**: Expand to different locations
+- **Contracts**: Fulfill orders for bonus rewards
 
 ## 🏗️ Project Structure
 
@@ -120,5 +143,5 @@ This is a personal project. Feel free to use and modify as you wish!
 ## 🔗 Resources
 
 - Design Document: [DESIGN.md](./DESIGN.md)
-- Current Phase: **Phase 2 (Automation)** ✅
-- Next Phase: **Phase 3 (Production Chains)**
+- Current Phase: **Phase 3 & 4 (Content + Upgrades)** ✅
+- Next: Future enhancements (Prestige, Workers, etc.)
