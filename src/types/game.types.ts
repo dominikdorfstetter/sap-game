@@ -8,8 +8,11 @@ export interface GameState {
   upgrades: UpgradeState;
   market: MarketState;
   unlockedRecipes: string[];
+  staff: StaffMember[];
+  research: ResearchQueue;
   preferences: UserPreferences;
   lastTick: number;
+  lastSalaryPayment: number;
   initialized: boolean;
 }
 
@@ -93,8 +96,38 @@ export interface MarketState {
   lastPriceUpdate: number;
 }
 
-export type DashboardWidget = 'quickActions' | 'inventory' | 'machines' | 'market' | 'production';
+export type DashboardWidget = 'quickActions' | 'inventory' | 'machines' | 'market' | 'production' | 'staff';
 
 export interface UserPreferences {
   pinnedWidgets: DashboardWidget[];
+}
+
+export interface StaffType {
+  id: string;
+  name: string;
+  description: string;
+  baseSalary: number; // Per hour (in-game time)
+  hireCoat: number;
+  productionSpeed: number; // Multiplier
+  specialty: string; // Recipe ID or 'research'
+  maxHires: number; // -1 for unlimited
+}
+
+export interface StaffMember {
+  id: string;
+  staffTypeId: string;
+  hiredAt: number;
+  assignedRecipe: string | null; // null if idle or researching
+}
+
+export interface ResearchQueue {
+  current: ResearchProject | null;
+  completed: string[]; // Upgrade IDs that have been researched
+}
+
+export interface ResearchProject {
+  upgradeId: string;
+  startedAt: number;
+  researchersAssigned: number;
+  progress: number; // 0-100
 }

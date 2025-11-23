@@ -3,6 +3,7 @@ import { GameState, GameScreen } from './types/game.types';
 import { loadGame, saveGame, createNewGame } from './utils/saveSystem';
 import { processMachineProduction, checkAndUnlockMachines } from './utils/productionSystem';
 import { updateMarketPrices, recoverDemand } from './utils/marketSystem';
+import { processStaffProduction, paySalaries, processResearch } from './utils/staffSystem';
 import { SetupScreen } from './components/screens/SetupScreen';
 import { ProductionScreen } from './components/screens/ProductionScreen';
 import './styles/erpTheme.css';
@@ -41,6 +42,15 @@ export function App() {
 
         // Process machine production
         let newState = processMachineProduction(currentState, 500);
+
+        // Process staff production
+        newState = processStaffProduction(newState, 500);
+
+        // Process research
+        newState = processResearch(newState, 500);
+
+        // Pay salaries (checks interval internally)
+        newState = paySalaries(newState);
 
         // Check for new unlocks
         newState = checkAndUnlockMachines(newState);

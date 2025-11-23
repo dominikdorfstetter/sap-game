@@ -19,6 +19,9 @@ export function canPurchaseUpgrade(gameState: GameState, upgradeId: string): boo
   const currentLevel = getUpgradeLevel(gameState, upgradeId);
   if (currentLevel >= upgrade.maxLevel) return false;
 
+  // Must be researched first
+  if (!gameState.research.completed.includes(upgradeId)) return false;
+
   const cost = getUpgradeCost(upgradeId, currentLevel);
   return gameState.company.cash >= cost;
 }

@@ -51,6 +51,20 @@ export function loadGame(): GameState | null {
       };
     }
 
+    // Migrate staff and research
+    if (!loadedState.staff) {
+      loadedState.staff = [];
+    }
+    if (!loadedState.research) {
+      loadedState.research = {
+        current: null,
+        completed: [],
+      };
+    }
+    if (!loadedState.lastSalaryPayment) {
+      loadedState.lastSalaryPayment = Date.now();
+    }
+
     return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -80,10 +94,16 @@ export function createNewGame(companyName: string): GameState {
     upgrades: {},
     market: initializeMarket(),
     unlockedRecipes: ['mine_ore', 'smelt_ingot', 'craft_screw'],
+    staff: [],
+    research: {
+      current: null,
+      completed: [],
+    },
     preferences: {
       pinnedWidgets: ['quickActions', 'inventory'],
     },
     lastTick: Date.now(),
+    lastSalaryPayment: Date.now(),
     initialized: true,
   };
 }

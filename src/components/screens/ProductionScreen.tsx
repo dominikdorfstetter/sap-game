@@ -5,6 +5,7 @@ import { RECIPES } from '../../data/recipes';
 import { purchaseMachine } from '../../utils/productionSystem';
 import { getCurrentPrice, adjustDemand } from '../../utils/marketSystem';
 import { purchaseUpgrade, getSellQuantities } from '../../utils/upgradeSystem';
+import { hireStaff, fireStaff, assignStaffToRecipe, startResearch } from '../../utils/staffSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -16,13 +17,15 @@ import { QuickMarket } from '../widgets/QuickMarket';
 import { MachinePanel } from '../game/MachinePanel';
 import { UpgradePanel } from '../game/UpgradePanel';
 import { MarketPanel } from '../game/MarketPanel';
+import { StaffPanel } from '../game/StaffPanel';
+import { ResearchPanel } from '../game/ResearchPanel';
 
 interface ProductionScreenProps {
   gameState: GameState;
   onUpdateState: (state: GameState) => void;
 }
 
-type ModalView = 'production' | 'machines' | 'market' | 'upgrades' | 'inventory' | 'customize' | null;
+type ModalView = 'production' | 'machines' | 'market' | 'upgrades' | 'inventory' | 'customize' | 'staff' | 'research' | null;
 
 export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenProps) {
   const [activeProduction, setActiveProduction] = useState<{
@@ -113,6 +116,30 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     }
   };
 
+  const handleHireStaff = (staffTypeId: string) => {
+    const newState = hireStaff(gameState, staffTypeId);
+    if (newState) {
+      onUpdateState(newState);
+    }
+  };
+
+  const handleFireStaff = (staffId: string) => {
+    const newState = fireStaff(gameState, staffId);
+    onUpdateState(newState);
+  };
+
+  const handleAssignStaff = (staffId: string, recipeId: string | null) => {
+    const newState = assignStaffToRecipe(gameState, staffId, recipeId);
+    onUpdateState(newState);
+  };
+
+  const handleStartResearch = (upgradeId: string) => {
+    const newState = startResearch(gameState, upgradeId);
+    if (newState) {
+      onUpdateState(newState);
+    }
+  };
+
   const toggleWidget = (widget: DashboardWidget) => {
     const newState = { ...gameState };
     const pinned = newState.preferences.pinnedWidgets;
@@ -196,6 +223,8 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
                 onOpenMarket={() => setModalView('market')}
                 onOpenUpgrades={() => setModalView('upgrades')}
                 onOpenMachines={() => setModalView('machines')}
+                onOpenStaff={() => setModalView('staff')}
+                onOpenResearch={() => setModalView('research')}
               />
             </Panel>
           )}
@@ -428,6 +457,23 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
               </tbody>
             </table>
           </div>
+        </Modal>
+      )}
+
+      {modalView === 'staff' && (
+        <Modal title="Staff Management" onClose={() => setModalView(null)} width="900px">
+          <StaffPanel
+            gameState={gameState}
+            onHire={handleHireStaff}
+            onFire={handleFireStaff}
+            onAssign={handleAssignStaff}
+          />
+        </Modal>
+      )}
+
+      {modalView === 'research' && (
+        <Modal title="Research Lab" onClose={() => setModalView(null)} width="900px">
+          <ResearchPanel gameState={gameState} onStartResearch={handleStartResearch} />
         </Modal>
       )}
     </div>
