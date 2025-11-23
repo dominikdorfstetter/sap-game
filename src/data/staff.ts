@@ -51,8 +51,8 @@ export const STAFF_TYPES: Record<string, StaffType> = {
   intern: {
     id: 'intern',
     name: 'Research Intern',
-    description: 'Researches upgrades in the lab',
-    baseSalary: 3,
+    description: 'Researches upgrades in the lab (works for free - "experience")',
+    baseSalary: 0, // Interns work for free (running gag)
     hireCoat: 25,
     productionSpeed: 1.0,
     specialty: 'research',

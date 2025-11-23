@@ -12,6 +12,7 @@ export interface GameState {
   research: ResearchQueue;
   fiscal: FiscalState;
   preferences: UserPreferences;
+  scouting: ScoutingState | null; // Active talent scout results
   lastTick: number;
   lastSalaryPayment: number;
   initialized: boolean;
@@ -158,6 +159,23 @@ export interface StaffMember {
   name: string; // Generated or special name
 }
 
+export interface StaffCandidate {
+  id: string; // Temporary ID for selection
+  staffTypeId: string;
+  salaryMultiplier: number;
+  speedMultiplier: number;
+  rarity: StaffRarity;
+  name: string;
+  // Derived display values
+  effectiveSalary: number;
+  effectiveSpeed: number;
+}
+
+export interface ScoutingState {
+  candidates: StaffCandidate[];
+  scoutedAt: number;
+  cost: number;
+}
 
 export interface ResearchQueue {
   current: ResearchProject | null;

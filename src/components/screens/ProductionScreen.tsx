@@ -4,11 +4,10 @@ import { ITEMS } from '../../data/items';
 import { RECIPES } from '../../data/recipes';
 import { MACHINES } from '../../data/machines';
 import { UPGRADES } from '../../data/upgrades';
-import { STAFF_TYPES } from '../../data/staff';
 import { purchaseMachine } from '../../utils/productionSystem';
 import { getCurrentPrice, adjustDemand } from '../../utils/marketSystem';
 import { purchaseUpgrade, getSellQuantities } from '../../utils/upgradeSystem';
-import { hireStaff, fireStaff, assignStaffToRecipe, startResearch } from '../../utils/staffSystem';
+import { scoutTalent, hireFromScout, dismissScout, fireStaff, assignStaffToRecipe, startResearch } from '../../utils/staffSystem';
 import { recordRevenue, recordExpense, payTaxes } from '../../utils/fiscalSystem';
 import { Panel } from '../ui/Panel';
 import { Button } from '../ui/Button';
@@ -136,16 +135,23 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     }
   };
 
-  const handleHireStaff = (staffTypeId: string) => {
-    let newState = hireStaff(gameState, staffTypeId);
+  const handleScoutTalent = () => {
+    const newState = scoutTalent(gameState);
     if (newState) {
-      // Record hire cost as expense
-      const staffType = STAFF_TYPES[staffTypeId];
-      if (staffType) {
-        newState = recordExpense(newState, staffType.hireCoat);
-      }
       onUpdateState(newState);
     }
+  };
+
+  const handleHireFromScout = (candidateId: string) => {
+    const newState = hireFromScout(gameState, candidateId);
+    if (newState) {
+      onUpdateState(newState);
+    }
+  };
+
+  const handleDismissScout = () => {
+    const newState = dismissScout(gameState);
+    onUpdateState(newState);
   };
 
   const handleFireStaff = (staffId: string) => {
@@ -580,10 +586,12 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
       )}
 
       {modalView === 'staff' && (
-        <Modal title="Staff Management" onClose={() => setModalView(null)} width="900px">
+        <Modal title="Staff Management" onClose={() => setModalView(null)} width="1200px">
           <StaffPanel
             gameState={gameState}
-            onHire={handleHireStaff}
+            onScoutTalent={handleScoutTalent}
+            onHireFromScout={handleHireFromScout}
+            onDismissScout={handleDismissScout}
             onFire={handleFireStaff}
             onAssign={handleAssignStaff}
           />

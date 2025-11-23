@@ -79,6 +79,11 @@ export function loadGame(): GameState | null {
       loadedState.fiscal = createInitialFiscalState();
     }
 
+    // Migrate scouting state
+    if (!loadedState.scouting) {
+      loadedState.scouting = null;
+    }
+
     return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -117,6 +122,7 @@ export function createNewGame(companyName: string): GameState {
     preferences: {
       pinnedWidgets: ['quickActions', 'inventory'],
     },
+    scouting: null,
     lastTick: Date.now(),
     lastSalaryPayment: Date.now(),
     initialized: true,

@@ -1,5 +1,5 @@
-import { GameState, StaffMember, StaffType } from '../types/game.types';
-import { STAFF_TYPES, RESEARCH_TIMES, STAT_VARIATIONS } from '../data/staff';
+import { GameState, StaffMember, StaffType, StaffCandidate, StaffRarity } from '../types/game.types';
+import { STAFF_TYPES, RESEARCH_TIMES, STAT_VARIATIONS, RARITY_WEIGHTS } from '../data/staff';
 import { RECIPES } from '../data/recipes';
 import { UPGRADES } from '../data/upgrades';
 import { recordExpense } from './fiscalSystem';
@@ -7,6 +7,30 @@ import { recordExpense } from './fiscalSystem';
 // Generate random multiplier within range
 function randomInRange(min: number, max: number): number {
   return min + Math.random() * (max - min);
+}
+
+// Generate a random rarity based on weights
+function generateRandomRarity(): StaffRarity {
+  const roll = Math.random();
+  let cumulative = 0;
+
+  const rarities: StaffRarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+
+  for (const rarity of rarities) {
+    cumulative += RARITY_WEIGHTS[rarity];
+    if (roll < cumulative) {
+      return rarity;
+    }
+  }
+
+  return 'common'; // Fallback
+}
+
+// Get random staff type of a given rarity
+function getRandomStaffOfRarity(rarity: StaffRarity): StaffType | null {
+  const staffOfRarity = Object.values(STAFF_TYPES).filter(s => s.rarity === rarity);
+  if (staffOfRarity.length === 0) return null;
+  return staffOfRarity[Math.floor(Math.random() * staffOfRarity.length)];
 }
 
 export function hireStaff(gameState: GameState, staffTypeId: string): GameState | null {
@@ -245,4 +269,115 @@ export function getTotalHourlyCost(gameState: GameState): number {
 
 export function getStaffByType(gameState: GameState, staffTypeId: string): StaffMember[] {
   return gameState.staff.filter((s) => s.staffTypeId === staffTypeId);
+}
+
+// Scout talent - generates 5 random candidates like a lootbox
+export function scoutTalent(gameState: GameState): GameState | null {
+  const SCOUT_COST = 100; // Cost to scout talent
+
+  // Check if can afford
+  if (gameState.company.cash < SCOUT_COST) return null;
+
+  // Can't scout if already have active scout results
+  if (gameState.scouting) return null;
+
+  const newState = { ...gameState };
+  newState.company.cash -= SCOUT_COST;
+
+  // Generate 5 random candidates
+  const candidates: StaffCandidate[] = [];
+
+  for (let i = 0; i < 5; i++) {
+    const rarity = generateRandomRarity();
+    const staffType = getRandomStaffOfRarity(rarity);
+
+    if (!staffType) continue; // Skip if no staff of this rarity
+
+    // Generate randomized stats
+    const statRange = STAT_VARIATIONS[staffType.rarity];
+    const salaryMultiplier = randomInRange(statRange.salary[0], statRange.salary[1]);
+    const speedMultiplier = randomInRange(statRange.speed[0], statRange.speed[1]);
+
+    // Generate name
+    const candidateNumber = Math.floor(Math.random() * 999) + 1;
+    const name = staffType.isSpecial
+      ? staffType.name
+      : `${staffType.name} #${candidateNumber}`;
+
+    candidates.push({
+      id: `candidate_${Date.now()}_${i}`,
+      staffTypeId: staffType.id,
+      salaryMultiplier,
+      speedMultiplier,
+      rarity: staffType.rarity,
+      name,
+      effectiveSalary: staffType.baseSalary * salaryMultiplier,
+      effectiveSpeed: staffType.productionSpeed * speedMultiplier,
+    });
+  }
+
+  newState.scouting = {
+    candidates,
+    scoutedAt: Date.now(),
+    cost: SCOUT_COST,
+  };
+
+  // Record scouting as expense
+  const stateWithExpense = recordExpense(newState, SCOUT_COST);
+
+  return stateWithExpense;
+}
+
+// Hire a candidate from scout results
+export function hireFromScout(gameState: GameState, candidateId: string): GameState | null {
+  if (!gameState.scouting) return null;
+
+  const candidate = gameState.scouting.candidates.find(c => c.id === candidateId);
+  if (!candidate) return null;
+
+  const staffType = STAFF_TYPES[candidate.staffTypeId];
+  if (!staffType) return null;
+
+  // Check if can afford hire cost
+  if (gameState.company.cash < staffType.hireCoat) return null;
+
+  // Check max hires limit
+  if (staffType.maxHires > 0) {
+    const currentCount = gameState.staff.filter((s) => s.staffTypeId === candidate.staffTypeId).length;
+    if (currentCount >= staffType.maxHires) return null;
+  }
+
+  const newState = { ...gameState };
+  newState.company.cash -= staffType.hireCoat;
+
+  // Create staff member from candidate
+  const newStaffMember: StaffMember = {
+    id: `staff_${Date.now()}_${Math.random()}`,
+    staffTypeId: candidate.staffTypeId,
+    hiredAt: Date.now(),
+    assignedRecipe: null,
+    salaryMultiplier: candidate.salaryMultiplier,
+    speedMultiplier: candidate.speedMultiplier,
+    rarity: candidate.rarity,
+    name: staffType.isSpecial
+      ? staffType.name
+      : `${staffType.name} #${gameState.staff.length + 1}`,
+  };
+
+  newState.staff = [...newState.staff, newStaffMember];
+
+  // Clear scouting state (can only hire one)
+  newState.scouting = null;
+
+  // Record hire cost as expense
+  const stateWithExpense = recordExpense(newState, staffType.hireCoat);
+
+  return stateWithExpense;
+}
+
+// Dismiss scout results without hiring
+export function dismissScout(gameState: GameState): GameState {
+  const newState = { ...gameState };
+  newState.scouting = null;
+  return newState;
 }
