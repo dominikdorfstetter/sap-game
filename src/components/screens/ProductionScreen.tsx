@@ -239,83 +239,102 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
         </div>
       </div>
 
-      {/* Minimal Dashboard */}
-      <div style={{ padding: '16px' }}>
+      {/* Bento Box Dashboard */}
+      <div style={{ padding: '20px', maxWidth: '1600px', margin: '0 auto' }}>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(6, 1fr)',
+            gridAutoRows: 'minmax(180px, auto)',
             gap: '16px',
           }}
         >
           {pinnedWidgets.includes('quickActions') && (
-            <Panel title="Quick Actions">
-              <QuickActions
-                onOpenProduction={() => setModalView('production')}
-                onOpenMarket={() => setModalView('market')}
-                onOpenUpgrades={() => setModalView('upgrades')}
-                onOpenMachines={() => setModalView('machines')}
-                onOpenStaff={() => setModalView('staff')}
-                onOpenResearch={() => setModalView('research')}
-              />
-            </Panel>
+            <div style={{ gridColumn: 'span 2' }}>
+              <Panel title="Quick Actions">
+                <QuickActions
+                  onOpenProduction={() => setModalView('production')}
+                  onOpenMarket={() => setModalView('market')}
+                  onOpenUpgrades={() => setModalView('upgrades')}
+                  onOpenMachines={() => setModalView('machines')}
+                  onOpenStaff={() => setModalView('staff')}
+                  onOpenResearch={() => setModalView('research')}
+                />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('inventory') && (
-            <Panel title="Inventory">
-              <QuickInventory
-                gameState={gameState}
-                onSell={sellItem}
-                onViewDetails={() => setModalView('inventory')}
-              />
-            </Panel>
+            <div style={{ gridColumn: 'span 2', gridRow: 'span 2' }}>
+              <Panel title="Inventory">
+                <QuickInventory
+                  gameState={gameState}
+                  onSell={sellItem}
+                  onViewDetails={() => setModalView('inventory')}
+                />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('machines') && (
-            <Panel title="Machines">
-              <QuickMachines gameState={gameState} onViewDetails={() => setModalView('machines')} />
-            </Panel>
+            <div style={{ gridColumn: 'span 2' }}>
+              <Panel title="Machines">
+                <QuickMachines gameState={gameState} onViewDetails={() => setModalView('machines')} />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('market') && (
-            <Panel title="Market Prices">
-              <QuickMarket gameState={gameState} onViewDetails={() => setModalView('market')} />
-            </Panel>
+            <div style={{ gridColumn: 'span 2' }}>
+              <Panel title="Market Prices">
+                <QuickMarket gameState={gameState} onViewDetails={() => setModalView('market')} />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('staff') && (
-            <Panel title="Staff">
-              <QuickStaff gameState={gameState} onViewDetails={() => setModalView('staff')} />
-            </Panel>
+            <div style={{ gridColumn: 'span 3' }}>
+              <Panel title="Staff">
+                <QuickStaff gameState={gameState} onViewDetails={() => setModalView('staff')} />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('research') && (
-            <Panel title="Research">
-              <QuickResearch gameState={gameState} onViewDetails={() => setModalView('research')} />
-            </Panel>
+            <div style={{ gridColumn: 'span 2' }}>
+              <Panel title="Research">
+                <QuickResearch gameState={gameState} onViewDetails={() => setModalView('research')} />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('financials') && (
-            <Panel title="Fiscal Overview">
-              <QuickFinancials gameState={gameState} onPayTaxes={handlePayTaxes} />
-            </Panel>
+            <div style={{ gridColumn: 'span 3', gridRow: 'span 2' }}>
+              <Panel title="Fiscal Overview">
+                <QuickFinancials gameState={gameState} onPayTaxes={handlePayTaxes} />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('analytics') && (
-            <Panel title="Analytics">
-              <QuickAnalytics gameState={gameState} />
-            </Panel>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <Panel title="Analytics">
+                <QuickAnalytics gameState={gameState} />
+              </Panel>
+            </div>
           )}
 
           {pinnedWidgets.includes('production') && activeProduction && (
-            <Panel title="Current Production">
-              <div>
-                <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
-                  {RECIPES[activeProduction.recipeId].name}
+            <div style={{ gridColumn: 'span 2' }}>
+              <Panel title="Current Production">
+                <div>
+                  <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
+                    {RECIPES[activeProduction.recipeId].name}
+                  </div>
+                  <ProgressBar progress={productionProgress} />
                 </div>
-                <ProgressBar progress={productionProgress} />
-              </div>
-            </Panel>
+              </Panel>
+            </div>
           )}
         </div>
 
