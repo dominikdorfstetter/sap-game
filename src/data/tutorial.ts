@@ -22,15 +22,15 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     message: 'This is where you\'ll craft items manually using interactive mini-games. Each resource has a unique production method - mining, sawing, hammering, etc. Let\'s try it!',
     highlightTarget: 'production-widget',
     action: 'click_continue',
-    position: 'top',
+    position: 'right',
   },
   {
     id: 3,
     title: '⛏️ Produce Your First Item',
-    message: 'Click on a recipe to start production. Try "Mine Iron Ore" - you\'ll click a button to mine. This will be your first product!',
+    message: 'Click "Craft" on "Mine Iron Ore" and then click the button that appears. This interactive mini-game will produce your first item!',
     highlightTarget: 'production-widget',
     action: 'produce_item',
-    position: 'top',
+    position: 'right',
   },
   {
     id: 4,
@@ -38,7 +38,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     message: 'Great work! Your produced items are stored here. You can see how much of each item you have.',
     highlightTarget: 'inventory-widget',
     action: 'click_continue',
-    position: 'top',
+    position: 'right',
   },
   {
     id: 5,
@@ -46,7 +46,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     message: 'Now let\'s make some money! The market shows current prices for items. Prices fluctuate based on supply and demand. Click "Sell" on your Iron Ore to earn your first cash!',
     highlightTarget: 'market-widget',
     action: 'sell_item',
-    position: 'top',
+    position: 'left',
   },
   {
     id: 6,
@@ -54,7 +54,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     message: 'Tired of manual production? Buy machines to automate! Machines produce items continuously in the background. You can afford a machine now!',
     highlightTarget: 'machines-widget',
     action: 'click_continue',
-    position: 'top',
+    position: 'left',
   },
   {
     id: 7,
@@ -62,7 +62,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     message: 'As you grow, hire operators to boost machine speed, salespeople to increase revenue, and interns to research new technologies!',
     highlightTarget: 'staff-widget',
     action: 'click_continue',
-    position: 'top',
+    position: 'left',
   },
   {
     id: 8,
@@ -70,7 +70,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     message: 'Research unlocks new recipes, upgrades, and capabilities. Hire interns (they work for free!) to speed up research. More interns = faster research!',
     highlightTarget: 'research-widget',
     action: 'click_continue',
-    position: 'top',
+    position: 'left',
   },
   {
     id: 9,

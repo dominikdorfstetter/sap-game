@@ -32,7 +32,7 @@ export function TutorialOverlay({ step, companyName, onNext, onSkip }: TutorialO
 
   const message = step.message.replace('{companyName}', companyName);
 
-  // Calculate tooltip position
+  // Calculate tooltip position with better bounds checking
   const getTooltipStyle = () => {
     if (!highlightRect) {
       // Center of screen
@@ -41,45 +41,90 @@ export function TutorialOverlay({ step, companyName, onNext, onSkip }: TutorialO
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
+        minWidth: '350px',
+        maxWidth: '500px',
       };
     }
 
     const baseStyle = {
       position: 'fixed' as const,
-      maxWidth: '400px',
+      minWidth: '350px',
+      maxWidth: '500px',
       zIndex: 10002,
     };
 
+    const padding = 24;
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    // Try positioning based on preference, but ensure it stays on screen
     switch (step.position) {
       case 'top':
+        // Position above the highlighted element
+        if (highlightRect.top > 250) {
+          return {
+            ...baseStyle,
+            bottom: `${screenHeight - highlightRect.top + padding}px`,
+            left: '50%',
+            transform: 'translateX(-50%)',
+          };
+        }
+        // Fallback to bottom if not enough space on top
         return {
           ...baseStyle,
-          bottom: `${window.innerHeight - highlightRect.top + 16}px`,
-          left: `${highlightRect.left + highlightRect.width / 2}px`,
+          top: `${highlightRect.bottom + padding}px`,
+          left: '50%',
           transform: 'translateX(-50%)',
         };
       case 'bottom':
+        // Position below the highlighted element
+        if (screenHeight - highlightRect.bottom > 250) {
+          return {
+            ...baseStyle,
+            top: `${highlightRect.bottom + padding}px`,
+            left: '50%',
+            transform: 'translateX(-50%)',
+          };
+        }
+        // Fallback to top if not enough space below
         return {
           ...baseStyle,
-          top: `${highlightRect.bottom + 16}px`,
-          left: `${highlightRect.left + highlightRect.width / 2}px`,
+          bottom: `${screenHeight - highlightRect.top + padding}px`,
+          left: '50%',
           transform: 'translateX(-50%)',
         };
       case 'left':
+        // Position to the left
+        if (highlightRect.left > 450) {
+          return {
+            ...baseStyle,
+            top: `${Math.max(padding, highlightRect.top + highlightRect.height / 2 - 100)}px`,
+            right: `${screenWidth - highlightRect.left + padding}px`,
+          };
+        }
+        // Fallback to right
         return {
           ...baseStyle,
-          top: `${highlightRect.top + highlightRect.height / 2}px`,
-          right: `${window.innerWidth - highlightRect.left + 16}px`,
-          transform: 'translateY(-50%)',
+          top: `${Math.max(padding, highlightRect.top + highlightRect.height / 2 - 100)}px`,
+          left: `${highlightRect.right + padding}px`,
         };
       case 'right':
+        // Position to the right
+        if (screenWidth - highlightRect.right > 450) {
+          return {
+            ...baseStyle,
+            top: `${Math.max(padding, highlightRect.top + highlightRect.height / 2 - 100)}px`,
+            left: `${highlightRect.right + padding}px`,
+          };
+        }
+        // Fallback to left
         return {
           ...baseStyle,
-          top: `${highlightRect.top + highlightRect.height / 2}px`,
-          left: `${highlightRect.right + 16}px`,
-          transform: 'translateY(-50%)',
+          top: `${Math.max(padding, highlightRect.top + highlightRect.height / 2 - 100)}px`,
+          right: `${screenWidth - highlightRect.left + padding}px`,
         };
       default:
+        // Center
         return {
           ...baseStyle,
           top: '50%',
@@ -128,38 +173,57 @@ export function TutorialOverlay({ step, companyName, onNext, onSkip }: TutorialO
       <div
         style={{
           ...getTooltipStyle(),
-          backgroundColor: '#fff',
-          border: '3px solid #003366',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+          backgroundColor: '#ffffff',
+          border: '4px solid #ff9800',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 2px #003366',
         }}
       >
-        <div style={{ marginBottom: '12px' }}>
-          <h3 style={{ margin: 0, color: '#003366', fontSize: '18px', fontWeight: 'bold' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <h3 style={{
+            margin: 0,
+            color: '#003366',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            lineHeight: '1.3',
+          }}>
             {step.title}
           </h3>
         </div>
 
-        <div style={{ marginBottom: '16px', fontSize: '14px', lineHeight: '1.5', color: '#333' }}>
+        <div style={{
+          marginBottom: '20px',
+          fontSize: '15px',
+          lineHeight: '1.6',
+          color: '#222',
+          fontWeight: '500',
+        }}>
           {message}
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-          <Button onClick={onSkip} style={{ padding: '8px 16px', fontSize: '13px' }}>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <Button onClick={onSkip} style={{ padding: '10px 20px', fontSize: '14px' }}>
             Skip Tutorial
           </Button>
           {step.action === 'click_continue' && (
-            <Button onClick={onNext} primary style={{ padding: '8px 16px', fontSize: '13px' }}>
+            <Button onClick={onNext} primary style={{ padding: '10px 20px', fontSize: '14px' }}>
               Next →
             </Button>
           )}
           {step.action !== 'click_continue' && (
-            <div style={{ fontSize: '12px', color: '#666', alignSelf: 'center' }}>
-              {step.action === 'produce_item' && '⏳ Complete the action to continue...'}
-              {step.action === 'sell_item' && '⏳ Sell an item to continue...'}
-              {step.action === 'buy_machine' && '⏳ Buy a machine to continue...'}
-              {step.action === 'hire_staff' && '⏳ Hire staff to continue...'}
+            <div style={{
+              fontSize: '14px',
+              color: '#ff9800',
+              fontWeight: 'bold',
+              padding: '8px 12px',
+              backgroundColor: '#fff3e0',
+              borderRadius: '4px',
+            }}>
+              {step.action === 'produce_item' && '⏳ Craft an item to continue'}
+              {step.action === 'sell_item' && '⏳ Sell an item to continue'}
+              {step.action === 'buy_machine' && '⏳ Buy a machine to continue'}
+              {step.action === 'hire_staff' && '⏳ Hire staff to continue'}
             </div>
           )}
         </div>
