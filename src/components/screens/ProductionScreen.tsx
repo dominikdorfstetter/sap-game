@@ -25,10 +25,9 @@ import { UpgradePanel } from '../game/UpgradePanel';
 import { MarketPanel } from '../game/MarketPanel';
 import { StaffPanel } from '../game/StaffPanel';
 import { ResearchPanel } from '../game/ResearchPanel';
-import { ClickInput } from '../inputs/ClickInput';
-import { SliderInput } from '../inputs/SliderInput';
-import { RapidClickInput } from '../inputs/RapidClickInput';
-import { HoldReleaseInput } from '../inputs/HoldReleaseInput';
+import { QuickProduction } from '../widgets/QuickProduction';
+import { TutorialOverlay } from '../tutorial/TutorialOverlay';
+import { TUTORIAL_STEPS } from '../../data/tutorial';
 
 interface ProductionScreenProps {
   gameState: GameState;
@@ -38,15 +37,12 @@ interface ProductionScreenProps {
 type ModalView = 'production' | 'machines' | 'market' | 'upgrades' | 'inventory' | 'customize' | 'staff' | 'research' | null;
 
 export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenProps) {
-  const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [modalView, setModalView] = useState<ModalView>(null);
 
-  // Handle manual production completion (called by input components)
-  const handleProductionComplete = () => {
-    if (!selectedRecipe) return;
-
-    const recipe = RECIPES[selectedRecipe];
-    const newState = { ...gameState };
+  // Handle manual production completion from QuickProduction widget
+  const handleProductionComplete = (recipeId: string) => {
+    const recipe = RECIPES[recipeId];
+    let newState = { ...gameState };
 
     // Consume inputs
     for (const input of recipe.inputs) {
@@ -57,26 +53,32 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     newState.inventory[recipe.output.itemId] =
       (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
 
+    // Tutorial progression: Mark produce_item action as complete
+    if (!newState.tutorial.completed && TUTORIAL_STEPS[newState.tutorial.currentStep]?.action === 'produce_item') {
+      newState.tutorial.stepCompleted[newState.tutorial.currentStep] = true;
+      newState.tutorial.currentStep += 1;
+    }
+
     onUpdateState(newState);
   };
 
-  // Render the appropriate input component based on recipe's inputMethod
-  const renderProductionInput = (recipe: typeof RECIPES[string]) => {
-    const inputMethod = recipe.inputMethod || 'click'; // Default to click if not specified
-    const canStart = canProduce(recipe.id);
+  // Tutorial handlers
+  const handleTutorialNext = () => {
+    const newState = { ...gameState };
+    newState.tutorial.stepCompleted[newState.tutorial.currentStep] = true;
+    newState.tutorial.currentStep += 1;
 
-    switch (inputMethod) {
-      case 'click':
-        return <ClickInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
-      case 'slider':
-        return <SliderInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
-      case 'rapid-click':
-        return <RapidClickInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} requiredClicks={5} />;
-      case 'hold-release':
-        return <HoldReleaseInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
-      default:
-        return <ClickInput onComplete={handleProductionComplete} disabled={!canStart} actionLabel={recipe.name} />;
+    if (newState.tutorial.currentStep >= TUTORIAL_STEPS.length) {
+      newState.tutorial.completed = true;
     }
+
+    onUpdateState(newState);
+  };
+
+  const handleTutorialSkip = () => {
+    const newState = { ...gameState };
+    newState.tutorial.completed = true;
+    onUpdateState(newState);
   };
 
   const sellItem = (itemId: string, amount: number) => {
@@ -91,6 +93,12 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
     newState.company.cash += revenue;
     newState = adjustDemand(newState, itemId, amount);
     newState = recordRevenue(newState, revenue);
+
+    // Tutorial progression: Mark sell_item action as complete
+    if (!newState.tutorial.completed && TUTORIAL_STEPS[newState.tutorial.currentStep]?.action === 'sell_item') {
+      newState.tutorial.stepCompleted[newState.tutorial.currentStep] = true;
+      newState.tutorial.currentStep += 1;
+    }
 
     onUpdateState(newState);
   };
@@ -177,28 +185,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
 
   const formatMoney = (amount: number) => `$${amount.toFixed(2)}`;
 
-  const canProduce = (recipeId: string) => {
-    const recipe = RECIPES[recipeId];
-    for (const input of recipe.inputs) {
-      const currentAmount = gameState.inventory[input.itemId] || 0;
-      if (currentAmount < input.amount) return false;
-    }
-    return true;
-  };
-
-  const getRecipeInputsDisplay = (recipeId: string): string => {
-    const recipe = RECIPES[recipeId];
-    if (recipe.inputs.length === 0) return '-';
-
-    return recipe.inputs
-      .map((input) => `${input.amount}x ${ITEMS[input.itemId].name}`)
-      .join(', ');
-  };
-
-  const unlockedRecipes = Object.values(RECIPES).filter(
-    (recipe) => gameState.unlockedRecipes.includes(recipe.id) || recipe.unlocked
-  );
-
   const sellQuantities = getSellQuantities(gameState);
 
   const pinnedWidgets = gameState.preferences.pinnedWidgets;
@@ -209,7 +195,9 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
       <div className="erp-header">
         <div className="erp-header-title">ERP Production Manager | {gameState.company.name}</div>
         <div className="erp-header-info">
-          Cash: <span className="money">{formatMoney(gameState.company.cash)}</span>
+          <span data-tutorial-id="cash-display">
+            Cash: <span className="money">{formatMoney(gameState.company.cash)}</span>
+          </span>
           <button
             onClick={() => setModalView('customize')}
             style={{
@@ -237,11 +225,18 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
             gap: '16px',
           }}
         >
+          {pinnedWidgets.includes('production') && (
+            <div style={{ gridColumn: 'span 3', gridRow: 'span 2' }} data-tutorial-id="production-widget">
+              <Panel title="🏭 Production">
+                <QuickProduction gameState={gameState} onProductionComplete={handleProductionComplete} />
+              </Panel>
+            </div>
+          )}
+
           {pinnedWidgets.includes('quickActions') && (
             <div style={{ gridColumn: 'span 2' }}>
               <Panel title="Quick Actions">
                 <QuickActions
-                  onOpenProduction={() => setModalView('production')}
                   onOpenMarket={() => setModalView('market')}
                   onOpenUpgrades={() => setModalView('upgrades')}
                   onOpenMachines={() => setModalView('machines')}
@@ -253,7 +248,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           )}
 
           {pinnedWidgets.includes('inventory') && (
-            <div style={{ gridColumn: 'span 2', gridRow: 'span 2' }}>
+            <div style={{ gridColumn: 'span 2', gridRow: 'span 2' }} data-tutorial-id="inventory-widget">
               <Panel title="Inventory">
                 <QuickInventory
                   gameState={gameState}
@@ -265,7 +260,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           )}
 
           {pinnedWidgets.includes('machines') && (
-            <div style={{ gridColumn: 'span 2' }}>
+            <div style={{ gridColumn: 'span 2' }} data-tutorial-id="machines-widget">
               <Panel title="Machines">
                 <QuickMachines gameState={gameState} onViewDetails={() => setModalView('machines')} />
               </Panel>
@@ -273,7 +268,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           )}
 
           {pinnedWidgets.includes('market') && (
-            <div style={{ gridColumn: 'span 2' }}>
+            <div style={{ gridColumn: 'span 2' }} data-tutorial-id="market-widget">
               <Panel title="Market Prices">
                 <QuickMarket gameState={gameState} onViewDetails={() => setModalView('market')} />
               </Panel>
@@ -281,7 +276,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           )}
 
           {pinnedWidgets.includes('staff') && (
-            <div style={{ gridColumn: 'span 3' }}>
+            <div style={{ gridColumn: 'span 3' }} data-tutorial-id="staff-widget">
               <Panel title="Staff">
                 <QuickStaff gameState={gameState} onViewDetails={() => setModalView('staff')} />
               </Panel>
@@ -289,7 +284,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           )}
 
           {pinnedWidgets.includes('research') && (
-            <div style={{ gridColumn: 'span 2' }}>
+            <div style={{ gridColumn: 'span 2' }} data-tutorial-id="research-widget">
               <Panel title="Research">
                 <QuickResearch gameState={gameState} onViewDetails={() => setModalView('research')} />
               </Panel>
@@ -329,70 +324,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
       </div>
 
       {/* Modals */}
-      {modalView === 'production' && (
-        <Modal title="Production" onClose={() => {
-          setModalView(null);
-          setSelectedRecipe(null);
-        }} width="900px">
-          {!selectedRecipe ? (
-            // Recipe selection table
-            <table className="erp-table">
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Inputs Required</th>
-                  <th>Output</th>
-                  <th style={{ width: '120px' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {unlockedRecipes.map((recipe) => (
-                  <tr key={recipe.id}>
-                    <td>{recipe.name}</td>
-                    <td style={{ fontSize: '11px' }}>{getRecipeInputsDisplay(recipe.id)}</td>
-                    <td>
-                      {recipe.output.amount}x {ITEMS[recipe.output.itemId].name}
-                    </td>
-                    <td>
-                      <Button
-                        onClick={() => setSelectedRecipe(recipe.id)}
-                        disabled={!canProduce(recipe.id)}
-                        primary
-                      >
-                        Craft
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            // Show input component for selected recipe
-            <div>
-              <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-                <h3 style={{ color: '#003366', marginBottom: '8px' }}>
-                  {RECIPES[selectedRecipe].name}
-                </h3>
-                <p style={{ fontSize: '13px', color: '#666' }}>
-                  {getRecipeInputsDisplay(selectedRecipe) !== '-' && (
-                    <span>Requires: {getRecipeInputsDisplay(selectedRecipe)} → </span>
-                  )}
-                  Produces: {RECIPES[selectedRecipe].output.amount}x {ITEMS[RECIPES[selectedRecipe].output.itemId].name}
-                </p>
-              </div>
-
-              {renderProductionInput(RECIPES[selectedRecipe])}
-
-              <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                <Button onClick={() => setSelectedRecipe(null)}>
-                  ← Back to Recipes
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
-      )}
-
       {modalView === 'inventory' && (
         <Modal title="Full Inventory" onClose={() => setModalView(null)} width="900px">
           <table className="erp-table">
@@ -597,6 +528,16 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
         <Modal title="Research Lab" onClose={() => setModalView(null)} width="900px">
           <ResearchPanel gameState={gameState} onStartResearch={handleStartResearch} />
         </Modal>
+      )}
+
+      {/* Tutorial Overlay */}
+      {!gameState.tutorial.completed && gameState.tutorial.currentStep < TUTORIAL_STEPS.length && (
+        <TutorialOverlay
+          step={TUTORIAL_STEPS[gameState.tutorial.currentStep]}
+          companyName={gameState.company.name}
+          onNext={handleTutorialNext}
+          onSkip={handleTutorialSkip}
+        />
       )}
     </div>
   );

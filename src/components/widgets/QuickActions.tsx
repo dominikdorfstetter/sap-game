@@ -1,7 +1,6 @@
 import { Button } from '../ui/Button';
 
 interface QuickActionsProps {
-  onOpenProduction: () => void;
   onOpenMarket: () => void;
   onOpenUpgrades: () => void;
   onOpenMachines: () => void;
@@ -10,7 +9,6 @@ interface QuickActionsProps {
 }
 
 export function QuickActions({
-  onOpenProduction,
   onOpenMarket,
   onOpenUpgrades,
   onOpenMachines,
@@ -19,14 +17,13 @@ export function QuickActions({
 }: QuickActionsProps) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-      <Button onClick={onOpenProduction} primary>
-        📋 Production
-      </Button>
       <Button onClick={onOpenMachines}>🏭 Machines</Button>
       <Button onClick={onOpenStaff}>👥 Staff</Button>
       <Button onClick={onOpenResearch}>🔬 Research</Button>
       <Button onClick={onOpenMarket}>💰 Market</Button>
-      <Button onClick={onOpenUpgrades}>⬆️ Upgrades</Button>
+      <Button onClick={onOpenUpgrades} style={{ gridColumn: 'span 2' }}>
+        ⬆️ Upgrades
+      </Button>
     </div>
   );
 }

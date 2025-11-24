@@ -13,10 +13,26 @@ export interface GameState {
   fiscal: FiscalState;
   preferences: UserPreferences;
   scouting: ScoutingState | null; // Active talent scout results
+  tutorial: TutorialState; // Onboarding progress
   lastTick: number;
   lastSalaryPayment: number;
   initialized: boolean;
 }
+
+export interface TutorialState {
+  completed: boolean;
+  currentStep: number;
+  stepCompleted: { [step: number]: boolean };
+}
+
+export type TutorialStep = {
+  id: number;
+  title: string;
+  message: string;
+  highlightTarget?: string; // CSS selector or widget ID
+  action?: 'produce_item' | 'sell_item' | 'buy_machine' | 'hire_staff' | 'click_continue';
+  position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
+};
 
 export type CompanyType = 'wood' | 'steel';
 

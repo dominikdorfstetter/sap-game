@@ -89,6 +89,15 @@ export function loadGame(): GameState | null {
       loadedState.company.type = 'steel';
     }
 
+    // Migrate tutorial state (old saves have completed tutorial)
+    if (!loadedState.tutorial) {
+      loadedState.tutorial = {
+        completed: true,
+        currentStep: 0,
+        stepCompleted: {},
+      };
+    }
+
     return loadedState as GameState;
   } catch (error) {
     console.error('Failed to load game:', error);
@@ -139,9 +148,14 @@ export function createNewGame(companyName: string, companyType: CompanyType = 's
     },
     fiscal: createInitialFiscalState(),
     preferences: {
-      pinnedWidgets: ['quickActions', 'inventory'],
+      pinnedWidgets: ['production', 'quickActions', 'inventory', 'market'],
     },
     scouting: null,
+    tutorial: {
+      completed: false,
+      currentStep: 0,
+      stepCompleted: {},
+    },
     lastTick: Date.now(),
     lastSalaryPayment: Date.now(),
     initialized: true,
