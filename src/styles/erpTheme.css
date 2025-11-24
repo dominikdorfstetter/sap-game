@@ -49,12 +49,6 @@ body {
   flex-direction: column;
   height: 100%;
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.1s ease;
-}
-
-.erp-panel:hover {
-  transform: translateY(-2px);
-  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .erp-panel-header {
@@ -94,10 +88,6 @@ body {
   color: var(--erp-text);
 }
 
-.erp-button:hover {
-  background-color: var(--erp-white);
-}
-
 .erp-button:active {
   border-top-color: var(--erp-border);
   border-left-color: var(--erp-border);
@@ -116,10 +106,6 @@ body {
 .erp-button-primary {
   background-color: var(--erp-gold);
   font-weight: bold;
-}
-
-.erp-button-primary:hover {
-  background-color: #FFC520;
 }
 
 /* ERP Input Style */
@@ -166,10 +152,6 @@ body {
 
 .erp-table tr:nth-child(even) {
   background-color: var(--erp-gray-light);
-}
-
-.erp-table tr:hover {
-  background-color: #D4E4F7;
 }
 
 /* ERP Label Style */

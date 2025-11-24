@@ -77,11 +77,24 @@ export function TechTreePanel({ gameState, onStartResearch, onPurchaseTech }: Te
     technology: Object.values(TECH_TREE).filter((t) => t.branch === 'technology'),
   };
 
-  // Filter by path restriction
+  // Filter by path restriction and prerequisites
   const filterByPath = (techs: typeof TECH_TREE[string][]) => {
-    return techs.filter(
-      (t) => !t.pathRestriction || t.pathRestriction === gameState.company.type
-    );
+    return techs.filter((t) => {
+      // Check path restriction
+      if (t.pathRestriction && t.pathRestriction !== gameState.company.type) {
+        return false;
+      }
+
+      // Only show if all prerequisites are researched (or no prerequisites)
+      if (t.prerequisites.length > 0) {
+        const allPrereqsResearched = t.prerequisites.every((prereqId) =>
+          isResearched(prereqId)
+        );
+        if (!allPrereqsResearched) return false;
+      }
+
+      return true;
+    });
   };
 
   const renderTechTable = (techs: typeof TECH_TREE[string][], title: string, emoji: string) => {

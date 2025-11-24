@@ -226,7 +226,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
       </div>
 
       {/* Bento Box Dashboard */}
-      <div style={{ padding: '20px', maxWidth: '1600px', margin: '0 auto' }}>
+      <div style={{ padding: '20px' }}>
         <div
           style={{
             display: 'grid',
