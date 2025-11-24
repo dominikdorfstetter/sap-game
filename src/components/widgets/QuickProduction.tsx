@@ -42,7 +42,7 @@ export function QuickProduction({ gameState, onProductionComplete }: QuickProduc
   const handleProductionComplete = () => {
     if (selectedRecipe) {
       onProductionComplete(selectedRecipe);
-      setSelectedRecipe(null);
+      // Don't auto-return - let user click back manually
     }
   };
 
