@@ -1,14 +1,14 @@
 import { Recipe } from '../types/game.types';
 
 export const RECIPES: Record<string, Recipe> = {
-  // Tier 1 - Raw Materials
+  // Tier 1 - Raw Materials (Path-Specific)
   mine_ore: {
     id: 'mine_ore',
     name: 'Mine Iron Ore',
     inputs: [],
     output: { itemId: 'ore', amount: 1 },
     productionTime: 1000,
-    unlocked: true,
+    unlocked: false, // Steel path only
     inputMethod: 'click', // Simple click to mine
   },
   chop_wood: {
@@ -17,7 +17,7 @@ export const RECIPES: Record<string, Recipe> = {
     inputs: [],
     output: { itemId: 'wood', amount: 1 },
     productionTime: 1200,
-    unlocked: true,
+    unlocked: false, // Wood path only
     inputMethod: 'slider', // Saw motion with slider
   },
   mine_coal: {
@@ -26,7 +26,7 @@ export const RECIPES: Record<string, Recipe> = {
     inputs: [],
     output: { itemId: 'coal', amount: 1 },
     productionTime: 1500,
-    unlocked: true,
+    unlocked: false, // Steel path only
     inputMethod: 'rapid-click', // Rapid hammering
   },
   gather_sand: {
@@ -49,7 +49,7 @@ export const RECIPES: Record<string, Recipe> = {
     ],
     output: { itemId: 'ingot', amount: 1 },
     productionTime: 2000,
-    unlocked: true,
+    unlocked: false, // Steel path only
     inputMethod: 'hold-release', // Timing for furnace
   },
   cut_wood_plank: {
@@ -58,7 +58,7 @@ export const RECIPES: Record<string, Recipe> = {
     inputs: [{ itemId: 'wood', amount: 1 }],
     output: { itemId: 'wood_plank', amount: 2 },
     productionTime: 1800,
-    unlocked: true,
+    unlocked: false, // Wood path only
     inputMethod: 'slider', // Sawing motion
   },
   make_glass: {
@@ -93,7 +93,7 @@ export const RECIPES: Record<string, Recipe> = {
     inputs: [{ itemId: 'ingot', amount: 1 }],
     output: { itemId: 'screw', amount: 4 },
     productionTime: 3000,
-    unlocked: true,
+    unlocked: false, // Steel path only
     inputMethod: 'click', // Simple crafting
   },
   craft_plate: {
