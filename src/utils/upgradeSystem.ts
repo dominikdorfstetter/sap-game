@@ -1,19 +1,33 @@
 import { GameState, UpgradeEffect } from '../types/game.types';
 import { UPGRADES } from '../data/upgrades';
+import { TECH_TREE } from '../data/techTree';
 
 export function getUpgradeLevel(gameState: GameState, upgradeId: string): number {
   return gameState.upgrades[upgradeId] || 0;
 }
 
 export function getUpgradeCost(upgradeId: string, currentLevel: number): number {
-  const upgrade = UPGRADES[upgradeId];
-  if (!upgrade) return 0;
+  const oldUpgrade = UPGRADES[upgradeId];
+  const techNode = TECH_TREE[upgradeId];
 
-  return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, currentLevel));
+  if (!oldUpgrade && !techNode) return 0;
+
+  let baseCost = 0;
+  let multiplier = 1;
+
+  if (techNode) {
+    baseCost = techNode.cost;
+    multiplier = techNode.costMultiplier || 1;
+  } else if (oldUpgrade) {
+    baseCost = oldUpgrade.baseCost;
+    multiplier = oldUpgrade.costMultiplier;
+  }
+
+  return Math.floor(baseCost * Math.pow(multiplier, currentLevel));
 }
 
 export function canPurchaseUpgrade(gameState: GameState, upgradeId: string): boolean {
-  const upgrade = UPGRADES[upgradeId];
+  const upgrade = UPGRADES[upgradeId] || TECH_TREE[upgradeId];
   if (!upgrade) return false;
 
   const currentLevel = getUpgradeLevel(gameState, upgradeId);
@@ -27,11 +41,19 @@ export function canPurchaseUpgrade(gameState: GameState, upgradeId: string): boo
 }
 
 export function purchaseUpgrade(gameState: GameState, upgradeId: string): GameState | null {
-  if (!canPurchaseUpgrade(gameState, upgradeId)) return null;
+  const upgrade = UPGRADES[upgradeId] || TECH_TREE[upgradeId];
+  if (!upgrade) return null;
 
-  const upgrade = UPGRADES[upgradeId];
+  // Must be researched first
+  if (!gameState.research.completed.includes(upgradeId)) return null;
+
   const currentLevel = getUpgradeLevel(gameState, upgradeId);
+  if (currentLevel >= upgrade.maxLevel) return null;
+
+  // Calculate cost
   const cost = getUpgradeCost(upgradeId, currentLevel);
+
+  if (gameState.company.cash < cost) return null;
 
   const newState = { ...gameState };
   newState.company.cash -= cost;
@@ -61,7 +83,7 @@ export function getUpgradeEffect(
 
   for (const upgradeId of Object.keys(gameState.upgrades)) {
     const level = gameState.upgrades[upgradeId];
-    const upgrade = UPGRADES[upgradeId];
+    const upgrade = UPGRADES[upgradeId] || TECH_TREE[upgradeId];
 
     if (!upgrade || level === 0) continue;
 
@@ -86,6 +108,7 @@ export function getUpgradeEffect(
 export function getSellQuantities(gameState: GameState): number[] {
   const quantities = [1]; // Always can sell 1
 
+  // Check old system first
   if (getUpgradeLevel(gameState, 'sell_quantity_1') > 0) {
     quantities.push(10);
   }
@@ -96,13 +119,49 @@ export function getSellQuantities(gameState: GameState): number[] {
     quantities.push(1000);
   }
 
+  // Check new tech tree system
+  if (getUpgradeLevel(gameState, 'bulk_trading_1') > 0) {
+    if (!quantities.includes(10)) quantities.push(10);
+  }
+  if (getUpgradeLevel(gameState, 'bulk_trading_2') > 0) {
+    if (!quantities.includes(100)) quantities.push(100);
+  }
+  if (getUpgradeLevel(gameState, 'bulk_trading_3') > 0) {
+    if (!quantities.includes(1000)) quantities.push(1000);
+  }
+
   return quantities;
 }
 
 export function getProductionSpeedMultiplier(
   gameState: GameState,
-  _isAutomation: boolean
+  isAutomation: boolean
 ): number {
-  const speedBonus = getUpgradeEffect(gameState, 'production_speed');
-  return 1 + speedBonus;
+  if (isAutomation) {
+    const automationBonus = getUpgradeEffect(gameState, 'automation_speed');
+    return 1 + automationBonus;
+  } else {
+    const speedBonus = getUpgradeEffect(gameState, 'production_speed');
+    return 1 + speedBonus;
+  }
+}
+
+export function getCriticalChance(gameState: GameState): number {
+  return getUpgradeEffect(gameState, 'critical_chance');
+}
+
+export function hasFeatureUnlocked(gameState: GameState, feature: string): boolean {
+  for (const upgradeId of Object.keys(gameState.upgrades)) {
+    const level = gameState.upgrades[upgradeId];
+    const upgrade = UPGRADES[upgradeId] || TECH_TREE[upgradeId];
+
+    if (!upgrade || level === 0) continue;
+
+    for (const effect of upgrade.effects) {
+      if (effect.type === 'unlock_feature' && effect.target === feature) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

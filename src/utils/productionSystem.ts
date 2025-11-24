@@ -1,6 +1,7 @@
 import { GameState, MachineInstance } from '../types/game.types';
 import { MACHINES } from '../data/machines';
 import { RECIPES } from '../data/recipes';
+import { getCriticalChance } from './upgradeSystem';
 
 export function processMachineProduction(
   gameState: GameState,
@@ -43,9 +44,20 @@ export function processMachineProduction(
           for (const input of recipe.inputs) {
             newState.inventory[input.itemId] -= input.amount;
           }
-          // Add output
+
+          // Check for critical hit
+          const critChance = getCriticalChance(newState);
+          const isCritical = Math.random() < critChance;
+          const outputMultiplier = isCritical ? 2 : 1;
+
+          // Add output (with critical multiplier if applicable)
+          const outputAmount = recipe.output.amount * outputMultiplier;
           newState.inventory[recipe.output.itemId] =
-            (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
+            (newState.inventory[recipe.output.itemId] || 0) + outputAmount;
+
+          if (isCritical) {
+            console.log(`💥 Machine CRITICAL! Produced ${outputAmount}x ${recipe.output.itemId}!`);
+          }
         } else {
           // Not enough materials, machine becomes idle
           break;

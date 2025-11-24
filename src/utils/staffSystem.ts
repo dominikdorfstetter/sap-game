@@ -2,6 +2,7 @@ import { GameState, StaffMember, StaffType, StaffCandidate, StaffRarity } from '
 import { STAFF_TYPES, RESEARCH_TIMES, STAT_VARIATIONS, RARITY_WEIGHTS } from '../data/staff';
 import { RECIPES } from '../data/recipes';
 import { UPGRADES } from '../data/upgrades';
+import { TECH_TREE } from '../data/techTree';
 import { recordExpense } from './fiscalSystem';
 
 // Generate random multiplier within range
@@ -195,7 +196,7 @@ export function paySalaries(gameState: GameState): GameState {
 }
 
 export function startResearch(gameState: GameState, upgradeId: string): GameState | null {
-  const upgrade = UPGRADES[upgradeId];
+  const upgrade = UPGRADES[upgradeId] || TECH_TREE[upgradeId];
   if (!upgrade) return null;
 
   // Check if already researched
@@ -242,7 +243,10 @@ export function processResearch(gameState: GameState, deltaTime: number): GameSt
     return newState;
   }
 
-  const baseTime = (RESEARCH_TIMES[project.upgradeId] || 60) * 1000; // Convert to ms
+  // Try tech tree first, then fall back to old research times
+  const tech = TECH_TREE[project.upgradeId];
+  const researchTime = tech ? tech.researchTime : (RESEARCH_TIMES[project.upgradeId] || 60);
+  const baseTime = researchTime * 1000; // Convert to ms
   // Linear scaling: Each intern contributes equally
   // 2 interns = 2x speed (half time), 3 interns = 3x speed (third time)
   const researchSpeed = currentInterns;

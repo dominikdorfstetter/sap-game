@@ -128,6 +128,18 @@ export function createNewGame(companyName: string, companyType: CompanyType = 's
 
   const pathConfig = companyType === 'wood' ? woodPath : steelPath;
 
+  // Create starting intern (works for free!)
+  const startingIntern = {
+    id: `staff_${Date.now()}_starter`,
+    staffTypeId: 'intern',
+    hiredAt: Date.now(),
+    assignedRecipe: null,
+    salaryMultiplier: 1.0,
+    speedMultiplier: 1.0,
+    rarity: 'uncommon' as const,
+    name: 'Research Intern #1',
+  };
+
   return {
     company: {
       name: companyName,
@@ -141,7 +153,7 @@ export function createNewGame(companyName: string, companyType: CompanyType = 's
     upgrades: {},
     market: initializeMarket(),
     unlockedRecipes: pathConfig.unlockedRecipes,
-    staff: [],
+    staff: [startingIntern],
     research: {
       current: null,
       completed: [],

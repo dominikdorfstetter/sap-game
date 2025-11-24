@@ -6,7 +6,7 @@ import { MACHINES } from '../../data/machines';
 import { UPGRADES } from '../../data/upgrades';
 import { purchaseMachine } from '../../utils/productionSystem';
 import { getCurrentPrice, adjustDemand } from '../../utils/marketSystem';
-import { purchaseUpgrade, getSellQuantities } from '../../utils/upgradeSystem';
+import { purchaseUpgrade, getSellQuantities, getCriticalChance } from '../../utils/upgradeSystem';
 import { scoutTalent, hireFromScout, dismissScout, fireStaff, assignStaffToRecipe, startResearch } from '../../utils/staffSystem';
 import { recordRevenue, recordExpense, payTaxes } from '../../utils/fiscalSystem';
 import { Panel } from '../ui/Panel';
@@ -21,10 +21,9 @@ import { QuickResearch } from '../widgets/QuickResearch';
 import { QuickFinancials } from '../widgets/QuickFinancials';
 import { QuickAnalytics } from '../widgets/QuickAnalytics';
 import { MachinePanel } from '../game/MachinePanel';
-import { UpgradePanel } from '../game/UpgradePanel';
 import { MarketPanel } from '../game/MarketPanel';
 import { StaffPanel } from '../game/StaffPanel';
-import { ResearchPanel } from '../game/ResearchPanel';
+import { TechTreePanel } from '../game/TechTreePanel';
 import { QuickProduction } from '../widgets/QuickProduction';
 import { TutorialOverlay } from '../tutorial/TutorialOverlay';
 import { TUTORIAL_STEPS } from '../../data/tutorial';
@@ -34,7 +33,7 @@ interface ProductionScreenProps {
   onUpdateState: (state: GameState) => void;
 }
 
-type ModalView = 'production' | 'machines' | 'market' | 'upgrades' | 'inventory' | 'customize' | 'staff' | 'research' | null;
+type ModalView = 'production' | 'machines' | 'market' | 'tech_tree' | 'inventory' | 'customize' | 'staff' | null;
 
 export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenProps) {
   const [modalView, setModalView] = useState<ModalView>(null);
@@ -49,9 +48,20 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
       newState.inventory[input.itemId] -= input.amount;
     }
 
-    // Add output
+    // Check for critical hit
+    const critChance = getCriticalChance(newState);
+    const isCritical = Math.random() < critChance;
+    const outputMultiplier = isCritical ? 2 : 1;
+
+    // Add output (with critical multiplier if applicable)
+    const outputAmount = recipe.output.amount * outputMultiplier;
     newState.inventory[recipe.output.itemId] =
-      (newState.inventory[recipe.output.itemId] || 0) + recipe.output.amount;
+      (newState.inventory[recipe.output.itemId] || 0) + outputAmount;
+
+    // Show critical hit feedback
+    if (isCritical) {
+      console.log(`💥 CRITICAL! Produced ${outputAmount}x ${ITEMS[recipe.output.itemId].name}!`);
+    }
 
     // Tutorial progression: Mark produce_item action as complete
     if (!newState.tutorial.completed && TUTORIAL_STEPS[newState.tutorial.currentStep]?.action === 'produce_item') {
@@ -238,10 +248,9 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
               <Panel title="Quick Actions">
                 <QuickActions
                   onOpenMarket={() => setModalView('market')}
-                  onOpenUpgrades={() => setModalView('upgrades')}
+                  onOpenTechTree={() => setModalView('tech_tree')}
                   onOpenMachines={() => setModalView('machines')}
                   onOpenStaff={() => setModalView('staff')}
-                  onOpenResearch={() => setModalView('research')}
                 />
               </Panel>
             </div>
@@ -286,7 +295,7 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
           {pinnedWidgets.includes('research') && (
             <div style={{ gridColumn: 'span 2' }} data-tutorial-id="research-widget">
               <Panel title="Research">
-                <QuickResearch gameState={gameState} onViewDetails={() => setModalView('research')} />
+                <QuickResearch gameState={gameState} onViewDetails={() => setModalView('tech_tree')} />
               </Panel>
             </div>
           )}
@@ -385,9 +394,13 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
         </Modal>
       )}
 
-      {modalView === 'upgrades' && (
-        <Modal title="Upgrades" onClose={() => setModalView(null)} width="900px">
-          <UpgradePanel gameState={gameState} onPurchase={handlePurchaseUpgrade} />
+      {modalView === 'tech_tree' && (
+        <Modal title="Technology Tree" onClose={() => setModalView(null)} width="1100px">
+          <TechTreePanel
+            gameState={gameState}
+            onStartResearch={handleStartResearch}
+            onPurchaseTech={handlePurchaseUpgrade}
+          />
         </Modal>
       )}
 
@@ -524,11 +537,6 @@ export function ProductionScreen({ gameState, onUpdateState }: ProductionScreenP
         </Modal>
       )}
 
-      {modalView === 'research' && (
-        <Modal title="Research Lab" onClose={() => setModalView(null)} width="900px">
-          <ResearchPanel gameState={gameState} onStartResearch={handleStartResearch} />
-        </Modal>
-      )}
 
       {/* Tutorial Overlay */}
       {!gameState.tutorial.completed && gameState.tutorial.currentStep < TUTORIAL_STEPS.length && (

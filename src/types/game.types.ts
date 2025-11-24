@@ -104,7 +104,7 @@ export interface Upgrade {
 }
 
 export interface UpgradeEffect {
-  type: 'sell_quantity' | 'production_speed' | 'market_bonus' | 'price_floor' | 'unlock_recipe' | 'auto_sell';
+  type: 'sell_quantity' | 'production_speed' | 'market_bonus' | 'price_floor' | 'unlock_recipe' | 'auto_sell' | 'automation_speed' | 'critical_chance' | 'unlock_feature';
   value: number; // Multiplier or flat bonus
   target?: string; // Optional specific target (recipe ID, item ID, etc.)
 }
@@ -209,4 +209,19 @@ export interface ResearchProject {
   startedAt: number;
   researchersAssigned: number;
   progress: number; // 0-100
+}
+
+export interface TechNode {
+  id: string;
+  name: string;
+  description: string;
+  category: 'production' | 'market' | 'technology';
+  researchTime: number; // seconds
+  cost: number; // Money cost after research
+  maxLevel: number;
+  costMultiplier?: number; // For multi-level upgrades
+  prerequisites: string[]; // Tech IDs that must be researched first
+  effects: UpgradeEffect[];
+  branch: 'production' | 'market' | 'technology';
+  pathRestriction?: CompanyType; // Only available to specific company types
 }
